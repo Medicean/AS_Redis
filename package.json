@@ -1,0 +1,22 @@
+{
+  "name": "Redis 管理",
+  "name_en": "Redis Manager",
+  "main": "index.js",
+  "icon": "database",
+  "version": "0.1",
+  "description": "管理 Redis",
+  "description_en": "Manager Redis",
+  "author": {
+    "name": "Medici.Yan",
+    "email": "Medici.Yan@gmail.com"
+  },
+  "category": "数据管理",
+  "category_en": "Datamanager",
+  "multiple": false,
+  "scripts": [
+    "php"
+  ],
+  "dependencies": {
+    "redis-parser": "^3.0.0"
+  }
+}

@@ -16,12 +16,12 @@
   - [x] 设置 TTL
   - [x] 删除 Key
   - [x] 重载键值
-  - [ ] 添加 Key
-    - [ ] String
-    - [ ] List
-    - [ ] Set
-    - [ ] ZSet
-    - [ ] Hash
+  - [x] 添加 Key
+    - [x] String
+    - [x] List
+    - [x] Set
+    - [x] ZSet
+    - [x] Hash
 - [x] String
   - [x] 查看
   - [x] 修改键值

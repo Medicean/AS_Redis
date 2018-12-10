@@ -105,10 +105,47 @@ class Plugin {
       }
     });
     
-    // TODO
     // 5. tree 右键::功能菜单
     this.tree.attachEvent('onRightClick', (id, event) => {
-
+      this.tree.selectItem(id);
+      const arr = id.split('::');
+      if (arr.length < 2) { throw new Error('ID ERR: ' + id) };
+      switch(arr[0]) {
+        case 'conn':
+          this.tree.callEvent('onClick', [id]);
+          bmenu([
+            {
+              text: LANG['list']['bmenu']['conn']['reload'],
+              icon: 'fa fa-refresh',
+              action: ()=>{
+                this.getDatabases( arr[1].split(":")[0]);
+              }
+            }
+          ], event);
+          break;
+        case 'database':
+          this.tree.callEvent('onClick', [id]);
+          bmenu([
+            {
+              text: LANG['list']['bmenu']['database']['addkey'],
+              icon: 'fa fa-plus-circle',
+              action: this.addKey.bind(this)
+            },
+            {
+              divider: true
+            }, {
+              text: LANG['list']['bmenu']['database']['reload'],
+              icon: 'fa fa-refresh',
+              action: ()=>{
+                this.getRedisKeys(arr[1].split(":")[0], new Buffer(arr[1].split(":")[1],'base64').toString());
+              }
+            }
+          ], event);
+          break;
+        case 'rediskeys':
+          // this.tree.callEvent('onClick', [id]);
+          break;
+      }
     });
     this.cell.progressOff();
   }
@@ -224,6 +261,8 @@ class Plugin {
       that.detail.toolbar.setItemText('data_size', `Size: ${that.keySize(value.length)}`);
     });
     // TODO grid 右键菜单
+    // 修改 score 和 hash value
+    // 暂时可通过添加重复的 field 来完成
 
     grid.init();
     // const listlayout = layout.attachLayout('2U');
@@ -1444,7 +1483,179 @@ class Plugin {
       that.list.layout.progressOff();
     });
   }
-  
+  /**
+   * 新增 Key
+   */
+  addKey() {
+    let that = this;
+    const info = this.tree.getSelected().split("::")[1];
+    const id = info.split(":")[0];
+    const db = new Buffer(info.split(":")[1], 'base64').toString();
+    const conf = that.pluginconf[id];
+    const hash = (+new Date * Math.random()).toString(16).substr(2, 8);
+    const win = that.win.createWindow(hash, 0, 0, 450, 350);
+    win.setText(LANG['addkey']['title']);
+    win.centerOnScreen();
+    win.button('minmax').hide();
+    win.setModal(true);
+    win.denyResize();
+    const toolbar = win.attachToolbar();
+    toolbar.loadStruct([
+      {
+        id: 'add',
+        type: 'button',
+        icon: 'plus-circle',
+        text: LANG['addkey']['toolbar']['add'],
+      },
+      { type: 'separator' },
+      {
+        id: 'clear',
+        type: 'button',
+        icon: 'remove',
+        text: LANG['addkey']['toolbar']['clear'],
+      }
+    ]);
+
+    const form = win.attachForm([
+      {type: 'settings', position: 'label-left', labelWidth: 90, inputWidth: 250 },
+      { type: 'block', inputWidth: 'auto', offsetTop: 12, list: [
+        { type: 'input', label: LANG['addkey']['form']['name'], name: 'key_name', required: true },
+        { type: 'combo', label: LANG['addkey']['form']['keytype'], readonly: true, name: 'type', options: [
+          { text: 'String', value: 'string', list: [
+            { type: 'settings', position: 'label-left', offsetLeft: 70, labelWidth: 250, inputWidth: 150 },
+            { type: 'label', label: `${LANG['addkey']['form']['value']}(${LANG['addkey']['info']['covernx']})` },
+            { type: 'input', name: 'string_value', rows: 10, inputWidth: 250, required: true}
+          ]},
+          { text: 'List', value: 'list', list: [
+            { type: 'settings', position: 'label-left', offsetLeft: 70, labelWidth: 250, inputWidth: 150 },
+            { type: 'label', label: `${LANG['addkey']['form']['value']}(${LANG['addkey']['info']['onemember']})`,},
+            { type: 'input', name: 'list_value', rows: 10, inputWidth: 250, required: true}
+          ]},
+          { text: 'Set', value: 'set', list: [
+            { type: 'settings', position: 'label-left', offsetLeft: 70, labelWidth: 250, inputWidth: 150 },
+            { type: 'label', label: `${LANG['addkey']['form']['value']}(${LANG['addkey']['info']['onemember']})` },
+            { type: 'input', name: 'set_value', rows: 10, inputWidth: 250, required: true}
+          ]},
+          { text: 'ZSet', value: 'zset', list: [
+            { type: 'settings', position: 'label-left', offsetLeft: 70, labelWidth: 250, inputWidth: 150 },
+            { type: 'label', label: `${LANG['addkey']['form']['value']}(${LANG['addkey']['info']['onemember']})` },
+            { type: 'input', name: 'zset_value', rows: 4, inputWidth: 250, required: true},
+            { type: 'label', label: `${LANG['addkey']['form']['score']}(${LANG['addkey']['info']['score']})` },
+            { type: 'input', name: 'zset_score', inputWidth: 250, required: true, validate: 'ValidNumeric', }
+          ]},
+          { text: 'Hash', value: 'hash', list: [
+            { type: 'settings', position: 'label-left', offsetLeft: 70, labelWidth: 250, inputWidth: 150 },
+            { type: 'label', label: `${LANG['addkey']['form']['hashkey']}(${LANG['addkey']['info']['covernx']})` },
+            { type: 'input', name: 'hash_key', rows: 3, inputWidth: 250, required: true},
+            { type: 'label', label: LANG['addkey']['form']['hashvalue'] },
+            { type: 'input', name: 'hash_value', rows: 4, inputWidth: 250, required: true}
+          ]},
+        ]}
+      ]}
+    ], true);
+
+    toolbar.attachEvent('onClick', (btnid)=>{
+      switch(btnid){
+        case 'clear':
+          form.clear();
+          break;
+        case 'add':
+          if(!form.validate()) {
+            return toastr.warning(LANG['addkey']['info']['warning'], LANG_T['warning']);
+          }
+          let addcmd = "";
+          // 解析数据
+          let data = form.getValues();
+          switch(data['type']){
+            case "string":
+              addcmd += that.redisutil.makeCommand('SET', data["key_name"], data["string_value"]);
+              break;
+            case "list":
+              addcmd += that.redisutil.makeCommand('LPUSH', data["key_name"], data["list_value"]);
+              break;
+            case "set":
+              addcmd += that.redisutil.makeCommand("SADD", data["key_name"], data["set_value"]);
+              break;
+            case "zset":
+              addcmd += that.redisutil.makeCommand("ZADD", data["key_name"], data["zset_score"], data["zset_value"]);
+              break;
+            case "hash":
+              addcmd += that.redisutil.makeCommand("HSET", data["key_name"], data["hash_key"], data["hash_value"]);
+              break;
+          }
+          if(addcmd.length <= 0) {
+            return toastr.warning(LANG['addkey']['info']['warning'], LANG_T['warning']);
+          }
+          let cmd = "";
+          let needpass = false;
+          if (conf['passwd'].length > 0) {
+            cmd = that.redisutil.makeCommand('AUTH', conf['passwd']);
+            needpass = true;
+          }
+          cmd += that.redisutil.makeCommand('SELECT', `${db}`);
+          cmd += addcmd;
+          that.plugincore.setHost(conf['host']);
+          that.core.request({
+            _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
+          }).then((res)=>{
+            let ret = res['text'];
+            that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr) => {
+              let retval;
+              if(needpass) {
+                if(errarr[0].length > 0) {
+                  toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
+                  return
+                }
+                if(errarr[2].length > 0) {
+                  toastr.error(errarr[2].toString(), LANG_T['error']);
+                  return
+                }
+                retval = valarr[2];
+              }else{
+                if(errarr[1].length > 0) {
+                  toastr.error(errarr[1].toString(), LANG_T['error']);
+                  return
+                }
+                retval = valarr[1];
+              }
+              switch(data['type']){
+                case 'zset':
+                  // 0 添加已经存在元素
+                  if (typeof retval == "number" && retval == 0){
+                    toastr.success(LANG['addkey']['info']['zsetsuccess'](data['zset_value']), LANG_T['success']);
+                  }else{
+                    toastr.success(LANG['addkey']['info']['success'], LANG_T['success']);
+                  }
+                  break;
+                case 'hash':
+                  // 0 添加已经存在元素
+                  if (typeof retval == "number" && retval == 0){
+                    toastr.success(LANG['addkey']['info']['hashsuccess'](data['hash_key']), LANG_T['success']);
+                  }else{
+                    toastr.success(LANG['addkey']['info']['success'], LANG_T['success']);
+                  }
+                  break;
+                default:
+                  // 可能是 OK 可能是 int
+                  if((typeof retval ==  "object" && new Buffer(retval).toString() == "OK") || (typeof retval == "number" && parseInt(retval) > 0)) {
+                    win.close();
+                    toastr.success(LANG['addkey']['info']['success'], LANG_T['success']);
+                    that.getRedisKeys(id, db);
+                    return
+                  }else{
+                    toastr.error(LANG['addkey']['info']['error'], LANG_T['error']);
+                    that.getRedisKeys(id, db);
+                  }
+                win.close();
+                that.getRedisKeys(id, db);
+                break;
+              }
+            });
+          });
+          break;
+      }
+    });
+  }
   resetView() {
     this.KeyBinaryData = new Buffer('');
     this.detail.toolbar.setItemText('data_size', 'Size:0b');

@@ -4,6 +4,40 @@ module.exports = {
     add: '添加',
     edit: '编辑',
     del: '删除',
+    bmenu: {
+      conn: {
+        reload: '刷新',
+      },
+      database: {
+        addkey: '新增Key',
+        reload: '刷新',
+      }
+    }
+  },
+  addkey: {
+    title: '新增Key',
+    toolbar: {
+      add: '添加',
+      clear: '重置',
+    },
+    form: {
+      keytype: '类型',
+      name: '键名',
+      value: '键值',
+      score: '权重',
+      hashkey: 'Key',
+      hashvalue: 'Value',
+    },
+    info: {
+      covernx: '如果旧值存在将会覆盖',
+      onemember: '只添加一个元素',
+      score: '整数或双精度浮点数',
+      zsetsuccess: (field)=>antSword.noxss(`操作完成, ${field} 已存在,仅修改了 score`),
+      hashsuccess: (field)=> antSword.noxss(`操作完成,${field} 已存在,仅修改了 value`),
+      warning: '请填写完整！',
+      success: '添加成功!',
+      error: '添加失败!',
+    }
   },
   keyview: {
     title: '结果信息',

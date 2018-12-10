@@ -8,6 +8,12 @@ const Core = require('./libs/core');
 
 class Plugin {
   constructor(opt) {
+    let minVer = "2.0.2.1"
+    let curVer = antSword.package.version || "0.0.0";
+    if(this.CompVersion(minVer, curVer) == false) {
+      toastr.error(LANG['error']['minvererr'](minVer, curVer), LANG_T['error']);
+      return
+    }
     this.dbname = 'redis';
     opt['plugins'] = opt['plugins'] || {};
     this.opt = opt;
@@ -105,6 +111,30 @@ class Plugin {
 
     });
     this.cell.progressOff();
+  }
+
+  /**
+   * AntSword 版本检查
+   * @param {String} minVer 最低版本 >=
+   * @param {String} curVer 当前版本
+   * @return {Boolean}
+   */
+   CompVersion(minVer, curVer) {
+    // 如果版本相同
+    if (curVer === minVer) { return true }
+    let currVerArr = curVer.split(".");
+    let minVerArr = minVer.split(".");
+    let len = Math.max(currVerArr.length, minVerArr.length);
+    for (let i = 0; i < len; i++) {
+        let minVal = ~~minVerArr[i],
+            curVal = ~~currVerArr[i];
+        if (minVal < curVal) {
+            return true;
+        } else if (minVal > curVal) {
+            return false;
+        }
+    }
+    return false;
   }
 
   initList(layout) {

@@ -32,6 +32,7 @@ module.exports = {
     },
   },
   error: {
+    minvererr: (minVer, curVer)=> antSword.noxss(`该插件目前仅适用于开发版.当前版本${curVer}低于所需版本${minVer}, 请切换分支到 v2.0.x 并获取最新开发版代码.`),
     auth: (err) => antSword.noxss(`认证失败, 原因:${err}`),
     database: (err) => antSword.noxss(`获取数据库列表失败！\n${err}`),
     nodatabase: (err) => antSword.noxss(`该数据库不存在,${err}`),

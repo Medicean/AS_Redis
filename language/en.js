@@ -32,6 +32,7 @@ module.exports = {
     },
   },
   error: {
+    minvererr: (minVer, curVer)=> antSword.noxss(`The plugin is currently only available for development editions.Your version(${curVer}) is lower than the required version ${minVer}, switch to v2.0.x branch and pull the latest development code.`),
     auth: (err) => antSword.noxss(`Authentication failed, error msg:${err}`),
     database: (err) => antSword.noxss(`Getting the database list failed.\n${err}`),
     nodatabase: (err) => antSword.noxss(`The database does not exist,${err}`),

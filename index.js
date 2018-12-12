@@ -72,12 +72,12 @@ class Plugin {
       switch(tmp[0]){
         case 'rediskeys':
           // 暂时不考虑命名空间解析问题
-          let _keys = arr;
-          this.getKeysValue(
-            _keys[0],
-            new Buffer(_keys[1], 'base64').toString(),
-            new Buffer(_keys[2], 'base64').toString()
-          );
+          // let _keys = arr;
+          // this.getKeysValue(
+          //   _keys[0],
+          //   new Buffer(_keys[1], 'base64').toString(),
+          //   new Buffer(_keys[2], 'base64').toString()
+          // );
         break;
       }
     });
@@ -300,6 +300,11 @@ class Plugin {
               that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
                 var retval;
                 if(needpass) {
+                  if(errarr.length != 3 || valarr.length != 3){
+                    toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                    that.redisutil.parser = that.redisutil.initParser();
+                    return
+                  }
                   if(errarr[0].length > 0) {
                     toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
                     return
@@ -310,6 +315,11 @@ class Plugin {
                   }
                   retval = valarr[2];
                 }else{
+                  if(errarr.length != 2 || valarr.length != 2){
+                    toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                    that.redisutil.parser = that.redisutil.initParser();
+                    return
+                  }
                   if(errarr[1].length > 0) {
                     toastr.error(errarr[1].toString(), LANG_T['error']);
                     return
@@ -359,6 +369,11 @@ class Plugin {
                 that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
                   var retval;
                   if(needpass) {
+                    if(errarr.length != 3 || valarr.length != 3){
+                      toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                      that.redisutil.parser = that.redisutil.initParser();
+                      return
+                    }
                     if(errarr[0].length > 0) {
                       toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
                       return
@@ -369,6 +384,11 @@ class Plugin {
                     }
                     retval = valarr[2];
                   }else{
+                    if(errarr.length != 2 || valarr.length != 2){
+                      toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                      that.redisutil.parser = that.redisutil.initParser();
+                      return
+                    }
                     if(errarr[1].length > 0) {
                       toastr.error(errarr[1].toString(), LANG_T['error']);
                       return
@@ -410,6 +430,11 @@ class Plugin {
               that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
                 var retval;
                 if(needpass) {
+                  if(errarr.length != 3 || valarr.length != 3){
+                    toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                    that.redisutil.parser = that.redisutil.initParser();
+                    return
+                  }
                   if(errarr[0].length > 0) {
                     toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
                     return
@@ -420,6 +445,11 @@ class Plugin {
                   }
                   retval = valarr[2];
                 }else{
+                  if(errarr.length != 2 || valarr.length != 2){
+                    toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                    that.redisutil.parser = that.redisutil.initParser();
+                    return
+                  }
                   if(errarr[1].length > 0) {
                     toastr.error(errarr[1].toString(), LANG_T['error']);
                     return
@@ -541,6 +571,11 @@ class Plugin {
                 that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
                   var retval;
                   if(needpass){
+                    if(errarr.length != 3 || valarr.length != 3){
+                      toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                      that.redisutil.parser = that.redisutil.initParser();
+                      return
+                    }
                     if(errarr[0].length > 0) {
                       toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
                       return
@@ -551,6 +586,11 @@ class Plugin {
                     }
                     retval = valarr[2];
                   }else{
+                    if(errarr.length != 2 || valarr.length != 2){
+                      toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                      that.redisutil.parser = that.redisutil.initParser();
+                      return
+                    }
                     if(errarr[1].length > 0) {
                       toastr.error(errarr[1].toString(), LANG_T['error']);
                       return
@@ -583,6 +623,11 @@ class Plugin {
                 that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
                   var retval;
                   if(needpass){
+                    if(errarr.length != 3 || valarr.length != 3){
+                      toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                      that.redisutil.parser = that.redisutil.initParser();
+                      return
+                    }
                     if(errarr[0].length > 0) {
                       toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
                       return
@@ -593,6 +638,11 @@ class Plugin {
                     }
                     retval = valarr[2];
                   }else{
+                    if(errarr.length != 2 || valarr.length != 2){
+                      toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                      that.redisutil.parser = that.redisutil.initParser();
+                      return
+                    }
                     if(errarr[1].length > 0) {
                       toastr.error(errarr[1].toString(), LANG_T['error']);
                       return
@@ -626,6 +676,11 @@ class Plugin {
                 that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
                   var retval;
                   if(needpass){
+                    if(errarr.length != 4 || valarr.length != 4){
+                      toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                      that.redisutil.parser = that.redisutil.initParser();
+                      return
+                    }
                     if(errarr[0].length > 0) {
                       toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
                       return
@@ -640,6 +695,11 @@ class Plugin {
                     }
                     retval = valarr[3];
                   }else{
+                    if(errarr.length != 3 || valarr.length != 3){
+                      toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                      that.redisutil.parser = that.redisutil.initParser();
+                      return
+                    }
                     if(errarr[1].length > 0) {
                       toastr.error(errarr[1].toString(), LANG_T['error']);
                       return
@@ -678,6 +738,11 @@ class Plugin {
                 that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
                   var retval;
                   if(needpass){
+                    if(errarr.length != 4 || valarr.length != 4){
+                      toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                      that.redisutil.parser = that.redisutil.initParser();
+                      return
+                    }
                     if(errarr[0].length > 0) {
                       toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
                       return
@@ -692,6 +757,11 @@ class Plugin {
                     }
                     retval = valarr[3];
                   }else{
+                    if(errarr.length != 3 || valarr.length != 3){
+                      toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                      that.redisutil.parser = that.redisutil.initParser();
+                      return
+                    }
                     if(errarr[1].length > 0) {
                       toastr.error(errarr[1].toString(), LANG_T['error']);
                       return
@@ -730,6 +800,11 @@ class Plugin {
                 that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
                   var retval;
                   if(needpass){
+                    if(errarr.length != 4 || valarr.length != 4){
+                      toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                      that.redisutil.parser = that.redisutil.initParser();
+                      return
+                    }
                     if(errarr[0].length > 0) {
                       toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
                       return
@@ -744,6 +819,11 @@ class Plugin {
                     }
                     retval = valarr[3];
                   }else{
+                    if(errarr.length != 3 || valarr.length != 3){
+                      toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                      that.redisutil.parser = that.redisutil.initParser();
+                      return
+                    }
                     if(errarr[1].length > 0) {
                       toastr.error(errarr[1].toString(), LANG_T['error']);
                       return
@@ -1008,6 +1088,11 @@ class Plugin {
       that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
         let value = "";
         if(needpass) {
+          if(errarr.length != 2 || valarr.length != 2){
+            toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+            that.redisutil.parser = that.redisutil.initParser();
+            return
+          }
           if(errarr[0].length > 0) {
             toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
             return
@@ -1018,6 +1103,11 @@ class Plugin {
           }
           value = valarr[1].toString();
         }else{
+          if(errarr.length != 1 || valarr.length != 1){
+            toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+            that.redisutil.parser = that.redisutil.initParser();
+            return
+          }
           if(errarr[0].length > 0) {
             toastr.error(LANG['error']['database'](errarr[0].toString()), LANG_T['error']);
             return
@@ -1069,6 +1159,7 @@ class Plugin {
     })
     .catch((err)=>{
       console.log(err);
+      that.redisutil.parser = that.redisutil.initParser();
       toastr.error(LANG['error']['database'](err['status'] || JSON.stringify(err)), LANG_T['error']);
       that.list.layout.progressOff();
     });
@@ -1094,6 +1185,11 @@ class Plugin {
       that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
         let value = "";
         if(needpass) {
+          if(errarr.length != 3 || valarr.length != 3){
+            toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+            that.redisutil.parser = that.redisutil.initParser();
+            return
+          }
           if(errarr[0].length > 0) {
             toastr.error(LANG['error']['auth'](errarr[0]), LANG_T['error']);
             return
@@ -1112,6 +1208,11 @@ class Plugin {
             value = valarr[2];
           }
         }else{
+          if(errarr.length != 2 || valarr.length != 2){
+            toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+            that.redisutil.parser = that.redisutil.initParser();
+            return
+          }
           if(errarr[0].length > 0) {
             toastr.error(LANG['error']['nodatabase'](errarr[0]), LANG_T['error']);
             return
@@ -1148,6 +1249,8 @@ class Plugin {
       });
     })
     .catch((err)=>{
+      // 重新初始化 parser
+      that.redisutil.parser = that.redisutil.initParser();
       toastr.error(LANG['error']['getkeys'](err['status'] || JSON.stringify(err)), LANG_T['error']);
       that.list.layout.progressOff();
     });
@@ -1178,6 +1281,11 @@ class Plugin {
         let typevalue = "";
         let ttlvalue = "";
         if(needpass) {
+          if(errarr.length != 4 || valarr.length != 4){
+            toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+            that.redisutil.parser = that.redisutil.initParser();
+            return
+          }
           if(errarr[0].length > 0) {
             toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
             return
@@ -1199,6 +1307,11 @@ class Plugin {
           typevalue = valarr[2].toString();
           ttlvalue = valarr[3].toString();
         }else{
+          if(errarr.length != 3 || valarr.length != 3){
+            toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+            that.redisutil.parser = that.redisutil.initParser();
+            return
+          }
           if(errarr[0].length > 0) {
             toastr.error(LANG['error']['nodatabase'](errarr[0].toString()), LANG_T['error']);
             return
@@ -1237,6 +1350,11 @@ class Plugin {
               that.redisutil.parseResponse(that.plugincore.decode(ret2),(valarr2, errarr2)=>{
                 let strvalue = "";
                 if(needpass) {
+                  if(errarr2.length != 3 || valarr2.length != 3){
+                    toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                    that.redisutil.parser = that.redisutil.initParser();
+                    return
+                  }
                   if(errarr2[0].length > 0) {
                     toastr.error(LANG['error']['auth'](errarr2[0].toString()), LANG_T['error']);
                     return
@@ -1248,6 +1366,11 @@ class Plugin {
                   strvalue = valarr2[2].toString();
                   that.KeyBinaryData = valarr2[2];
                 }else{
+                  if(errarr2.length != 2 || valarr2.length != 2){
+                    toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                    that.redisutil.parser = that.redisutil.initParser();
+                    return
+                  }
                   if(errarr2[1].length > 0) {
                     toastr.error(errarr2[0].toString(), LANG_T['error']);
                     return
@@ -1277,6 +1400,11 @@ class Plugin {
               that.redisutil.parseResponse(that.plugincore.decode(ret2),(valarr2, errarr2)=>{
                 let listvalue = "";
                 if(needpass) {
+                  if(errarr2.length != 3 || valarr2.length != 3){
+                    toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                    that.redisutil.parser = that.redisutil.initParser();
+                    return
+                  }
                   if(errarr2[0].length > 0) {
                     toastr.error(LANG['error']['auth'](errarr2[0].toString()), LANG_T['error']);
                     return
@@ -1288,6 +1416,11 @@ class Plugin {
                   // array
                   listvalue = valarr2[2];
                 }else{
+                  if(errarr2.length != 2 || valarr2.length != 2){
+                    toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                    that.redisutil.parser = that.redisutil.initParser();
+                    return
+                  }
                   if(errarr2[1].length > 0) {
                     toastr.error(errarr2[0].toString(), LANG_T['error']);
                     return
@@ -1330,6 +1463,11 @@ class Plugin {
               that.redisutil.parseResponse(that.plugincore.decode(ret2),(valarr2, errarr2)=>{
                 let setvalue = "";
                 if(needpass) {
+                  if(errarr2.length != 3 || valarr2.length != 3){
+                    toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                    that.redisutil.parser = that.redisutil.initParser();
+                    return
+                  }
                   if(errarr2[0].length > 0) {
                     toastr.error(LANG['error']['auth'](errarr2[0].toString()), LANG_T['error']);
                     return
@@ -1340,6 +1478,11 @@ class Plugin {
                   }
                   setvalue = valarr2[2];
                 }else{
+                  if(errarr2.length != 2 || valarr2.length != 2){
+                    toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                    that.redisutil.parser = that.redisutil.initParser();
+                    return
+                  }
                   if(errarr2[1].length > 0) {
                     toastr.error(errarr2[0].toString(), LANG_T['error']);
                     return
@@ -1381,6 +1524,11 @@ class Plugin {
               that.redisutil.parseResponse(that.plugincore.decode(ret2),(valarr2, errarr2)=>{
                 let setvalue = "";
                 if(needpass) {
+                  if(errarr2.length != 3 || valarr2.length != 3){
+                    toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                    that.redisutil.parser = that.redisutil.initParser();
+                    return
+                  }
                   if(errarr2[0].length > 0) {
                     toastr.error(LANG['error']['auth'](errarr2[0].toString()), LANG_T['error']);
                     return
@@ -1391,6 +1539,11 @@ class Plugin {
                   }
                   setvalue = valarr2[2][1];
                 }else{
+                  if(errarr2.length != 2 || valarr2.length != 2){
+                    toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                    that.redisutil.parser = that.redisutil.initParser();
+                    return
+                  }
                   if(errarr2[1].length > 0) {
                     toastr.error(errarr2[0].toString(), LANG_T['error']);
                     return
@@ -1433,6 +1586,11 @@ class Plugin {
               that.redisutil.parseResponse(that.plugincore.decode(ret2),(valarr2, errarr2)=>{
                 let setvalue = "";
                 if(needpass) {
+                  if(errarr2.length != 3 || valarr2.length != 3){
+                    toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                    that.redisutil.parser = that.redisutil.initParser();
+                    return
+                  }
                   if(errarr2[0].length > 0) {
                     toastr.error(LANG['error']['auth'](errarr2[0].toString()), LANG_T['error']);
                     return
@@ -1443,6 +1601,11 @@ class Plugin {
                   }
                   setvalue = valarr2[2];
                 }else{
+                  if(errarr2.length != 2 || valarr2.length != 2){
+                    toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                    that.redisutil.parser = that.redisutil.initParser();
+                    return
+                  }
                   if(errarr2[1].length > 0) {
                     toastr.error(errarr2[0].toString(), LANG_T['error']);
                     return
@@ -1479,6 +1642,7 @@ class Plugin {
       });
     })
     .catch((err)=>{
+      that.redisutil.parser = that.redisutil.initParser();
       toastr.error(LANG['error']['getkeys'](err['status'] || JSON.stringify(err)), LANG_T['error']);
       that.list.layout.progressOff();
     });
@@ -1602,6 +1766,11 @@ class Plugin {
             that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr) => {
               let retval;
               if(needpass) {
+                if(errarr.length != 3 || valarr.length != 3){
+                  toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                  that.redisutil.parser = that.redisutil.initParser();
+                  return
+                }
                 if(errarr[0].length > 0) {
                   toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
                   return
@@ -1612,6 +1781,11 @@ class Plugin {
                 }
                 retval = valarr[2];
               }else{
+                if(errarr.length != 2 || valarr.length != 2){
+                  toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                  that.redisutil.parser = that.redisutil.initParser();
+                  return
+                }
                 if(errarr[1].length > 0) {
                   toastr.error(errarr[1].toString(), LANG_T['error']);
                   return
@@ -1651,6 +1825,8 @@ class Plugin {
                 break;
               }
             });
+          }).catch((err)=>{
+            that.redisutil.parser = that.redisutil.initParser();
           });
           break;
       }

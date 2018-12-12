@@ -73,6 +73,7 @@ module.exports = {
     delconf: (err)=> antSword.noxss(`删除配置失败,原因: ${err}`),
     getkeys: (err) => antSword.noxss(`获取 Key 失败,原因: ${err}`),
     notimpl: (typevalue) => antSword.noxss(`暂不支持${typevalue}类型的Key`),
+    parseerr: `解析数据失败,请重试`,
   },
   add: {
     form: {

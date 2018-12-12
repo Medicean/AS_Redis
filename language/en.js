@@ -38,7 +38,8 @@ module.exports = {
     nodatabase: (err) => antSword.noxss(`The database does not exist,${err}`),
     delconf: (err)=> antSword.noxss(`Delete configuration failed,error msg: ${err}`),
     getkeys: (err) => antSword.noxss(`Getting Key failed,error msg: ${err}`),
-    notimpl: (typevalue) => antSword.noxss(`Type ${typevalue} not support.`), 
+    notimpl: (typevalue) => antSword.noxss(`Type ${typevalue} not support.`),
+    parseerr: `Parse response error, please try again.`,
   },
   add: {
     form: {

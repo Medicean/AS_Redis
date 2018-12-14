@@ -1540,7 +1540,7 @@ class Plugin {
               cmd = that.redisutil.makeCommand('AUTH', conf['passwd']);
             }
             cmd += that.redisutil.makeCommand('SELECT', `${db}`);
-            cmd += that.redisutil.makeCommand('SMEMBERS', `${rdkey}`);
+            cmd += that.redisutil.makeCommand('SSCAN', `${rdkey}`,'0','COUNT','1000');
             that.core.request({
               _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
             }).then((res2)=>{
@@ -1562,7 +1562,7 @@ class Plugin {
                     toastr.error(errarr2[2].toString(), LANG_T['error']);
                     return
                   }
-                  setvalue = valarr2[2];
+                  setvalue = valarr2[2][1];
                 }else{
                   if(errarr2.length != 2 || valarr2.length != 2){
                     toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
@@ -1573,7 +1573,7 @@ class Plugin {
                     toastr.error(errarr2[0].toString(), LANG_T['error']);
                     return
                   }
-                  setvalue = valarr2[1];
+                  setvalue = valarr2[1][1];
                 }
                 that.keyview.grid.detachHeader(0);
                 that.keyview.grid.attachHeader("No.,Value");

@@ -14,6 +14,32 @@ module.exports = {
       }
     }
   },
+  insertitem: {
+    title: '插入元素',
+    toolbar: {
+      add: '插入',
+      clear: '重置',
+    },
+  },
+  delitem: {
+    title: '删除元素',
+    confirm: `确定要删除吗?`,
+    error: {
+      novalue: '未获取到要删除的元素',
+    },
+    success: '删除元素成功',
+    error: '删除元素失败',
+  },
+  edititem: {
+    zset:{
+      title: '修改 Score',
+    },
+    hash:{
+      title: '修改 Hash Value',
+    },
+    success: '修改成功',
+    error: '修改失败',
+  },
   addkey: {
     title: '新增Key',
     toolbar: {
@@ -56,6 +82,12 @@ module.exports = {
       title: '设置 TTL',
       success: '设置 TTL 成功',
       error: '设置 TTL 失败',
+    },
+    contextmenu: {
+      add: "插入行",
+      del: "删除行",
+      edit_score: "修改 Score",
+      edit_hashvalue: "修改 HashValue",
     }
   },
   detail: {

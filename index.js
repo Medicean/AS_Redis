@@ -8,6 +8,7 @@ const Core = require('./libs/core');
 
 class Plugin {
   constructor(opt) {
+    antSword['test'] = this;
     let minVer = "2.0.2.1"
     let curVer = antSword.package.version || "0.0.0";
     if(this.CompVersion(minVer, curVer) == false) {
@@ -255,15 +256,93 @@ class Plugin {
     grid.enableAutoWidth(true,600,100);
 
     grid.attachEvent('onRowSelect', (id, lid, event) => {
+      bmenu.hide();
       let b64val = grid.getRowAttribute(id, 'b64val');
       let value = new Buffer(b64val, 'base64').toString();
       that.detail.editor.session.setValue(value);
       that.detail.toolbar.setItemText('data_size', `Size: ${that.keySize(value.length)}`);
     });
+    
+    $('.objbox').on('contextmenu', (e) => {
+      (e.target.nodeName === 'DIV' && grid.callEvent instanceof Function && antSword['tabbar'].getActiveTab().startsWith('tab_redis_')) ? grid.callEvent('onRightClick', [-1, -1, e]) : null;
+    });
+
+    $('.objbox').on('click', (e) => {
+      bmenu.hide();
+    });
     // TODO grid 右键菜单
     // 修改 score 和 hash value
     // 暂时可通过添加重复的 field 来完成
-
+    grid.attachEvent('onRightClick', function(id, lid, event) {
+      if(id != -1) {
+        grid.selectRowById(id);
+      }
+      if(that.tree.getSelected().split("::")[0] != "rediskeys") {
+        return
+      }
+      let selecttree = that.tree.getSelected().split("::")[1];
+      const treeid = selecttree.split(":")[0];
+      const conf = that.pluginconf[treeid];
+      const db = new Buffer(selecttree.split(":")[1], 'base64').toString();
+      const selkey = new Buffer(selecttree.split(":")[2], 'base64').toString();
+      if (toolbar.getInput("data_key").value != selkey) {
+        // 选择的 Key 和 界面显示的 Key 不一致
+        return
+      }
+      const keytype = toolbar.getItemText("data_type").toLowerCase();
+      if( keytype == "string" || keytype == "") {
+        // String 不需要
+        return
+      }
+      let menu = [
+        { text: LANG['keyview']['contextmenu']['add'], icon: 'fa fa-plus-circle', action:()=>{
+            that.insertKeyItem({
+              id: treeid,
+              conf: conf,
+              db: db,
+              rediskey: selkey,
+              keytype: keytype,
+            });
+          }
+        },
+        { text: LANG['keyview']['contextmenu']['del'], icon: 'fa fa-trash', disabled: id <= 0, action:()=>{
+            that.delKeyItem({
+              id: treeid,
+              conf: conf,
+              db: db,
+              rediskey: selkey,
+              keytype: keytype,
+              idx: parseInt(id-1), // 移除的序号(删除List时需要)
+              ivalue_b64: grid.getRowAttribute(id, 'b64val'), // 元素的b64值
+            });
+          }
+        },
+        {divider: true},
+        { text: LANG['keyview']['contextmenu']['edit_score'], icon: 'fa fa-edit', disabled: keytype != "zset", action:()=>{
+            that.editZsetKeyScore({
+              id: treeid,
+              conf: conf,
+              db: db,
+              rediskey: selkey,
+              ivalue_b64: grid.getRowAttribute(id, 'b64val'), // 元素的b64值
+              ivalue2_b64: grid.getRowAttribute(id, 'b64val2'), // 元素2的b64值
+            });
+          }
+        },
+        { text: LANG['keyview']['contextmenu']['edit_hashvalue'], icon: 'fa fa-edit', disabled: keytype != "hash", action:()=>{
+            that.editHashKeyValue({
+              id: treeid,
+              conf: conf,
+              db: db,
+              rediskey: selkey,
+              ivalue_b64: grid.getRowAttribute(id, 'b64val'), // 元素的b64值
+              ivalue2_b64: grid.getRowAttribute(id, 'b64val2'), // 元素2的b64值
+            });
+          }
+        },
+      ];
+      bmenu(menu, event);
+    });
     grid.init();
     // const listlayout = layout.attachLayout('2U');
     // let view_listlayout = listlayout.cells('a');
@@ -272,6 +351,11 @@ class Plugin {
     // ctrl_listlayout.hideHeader();
     toolbar.attachEvent('onClick', (id)=>{
       const selecttree = that.tree.getSelected().split("::")[1];
+      if(selecttree == "") {
+        that.disableResultToolbar();
+        that.disableEditor();
+        return
+      }
       // 获取配置
       const treeid = selecttree.split(":")[0];
       const conf = that.pluginconf[treeid];
@@ -399,6 +483,8 @@ class Plugin {
                     toastr.success(LANG['keyview']['del']['success'],LANG_T['success']);
                     that.getRedisKeys(treeid, db);
                     that.resetView();
+                    that.disableResultToolbar();
+                    that.disableEditor();
                   }else{
                     toastr.error(LANG['keyview']['del']['error'],LANG_T['error']);
                     return
@@ -1516,7 +1602,7 @@ class Plugin {
               cmd = that.redisutil.makeCommand('AUTH', conf['passwd']);
             }
             cmd += that.redisutil.makeCommand('SELECT', `${db}`);
-            cmd += that.redisutil.makeCommand('HSCAN', `${rdkey}`,'0','COUNT','10000');
+            cmd += that.redisutil.makeCommand('HSCAN', `${rdkey}`,'0','COUNT','1000');
             that.core.request({
               _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
             }).then((res2)=>{
@@ -1632,6 +1718,11 @@ class Plugin {
                 this.enableEditor();
               });
             });
+            break;
+          case 'none':
+            that.getRedisKeys(id, db);
+            that.disableResultToolbar();
+            that.disableEditor();
             break;
           default:
             toastr.error(LANG['error']['notimpl'](typevalue), LANG_T['error']);
@@ -1812,18 +1903,16 @@ class Plugin {
                 default:
                   // 可能是 OK 可能是 int
                   if((typeof retval ==  "object" && new Buffer(retval).toString() == "OK") || (typeof retval == "number" && parseInt(retval) > 0)) {
-                    win.close();
                     toastr.success(LANG['addkey']['info']['success'], LANG_T['success']);
-                    that.getRedisKeys(id, db);
-                    return
                   }else{
                     toastr.error(LANG['addkey']['info']['error'], LANG_T['error']);
                     that.getRedisKeys(id, db);
+                    return
                   }
-                win.close();
-                that.getRedisKeys(id, db);
-                break;
+                  break;
               }
+              win.close();
+              that.getRedisKeys(id, db);
             });
           }).catch((err)=>{
             that.redisutil.parser = that.redisutil.initParser();
@@ -1832,11 +1921,441 @@ class Plugin {
       }
     });
   }
+
+  /**
+   * 插入元素
+   */
+  insertKeyItem(opt) {
+    let that = this;
+    const info = opt['info'];
+    const id = opt['id'];
+    const db = opt['db'];
+    const conf = opt['conf'];
+    const keytype = opt['keytype'];
+    const rediskey = opt['rediskey'];
+
+    const hash = (+new Date * Math.random()).toString(16).substr(2, 8);
+    const win = that.win.createWindow(hash, 0, 0, 380, 300);
+    win.setText(LANG['insertitem']['title']);
+    win.centerOnScreen();
+    win.button('minmax').hide();
+    win.setModal(true);
+    win.denyResize();
+    const toolbar = win.attachToolbar();
+    toolbar.loadStruct([
+      {
+        id: 'add',
+        type: 'button',
+        icon: 'plus-circle',
+        text: LANG['insertitem']['toolbar']['add'],
+      },
+      { type: 'separator' },
+      {
+        id: 'clear',
+        type: 'button',
+        icon: 'remove',
+        text: LANG['insertitem']['toolbar']['clear'],
+      }
+    ]);
+    const form = win.attachForm([
+      {type: 'settings', position: 'label-left', labelWidth: 150, inputWidth: 150 },
+      { type: 'block', inputWidth: 'auto', offsetTop: 12, list: [
+          { type:'block', hidden: keytype != "list", disabled: keytype != "list", list: [ // LIST
+            { type: 'settings', position: 'label-left', offsetLeft: 12, labelWidth: 250, inputWidth: 150 },
+            { type: 'label', label: `${LANG['addkey']['form']['value']}(${LANG['addkey']['info']['onemember']})`,},
+            { type: 'input', name: 'list_value', rows: 10, inputWidth: 250, required: true}
+          ]},
+          { type: 'block', hidden: keytype != "set", disabled: keytype != "set", list: [
+            { type: 'settings', position: 'label-left', offsetLeft: 12, labelWidth: 250, inputWidth: 150 },
+            { type: 'label', label: `${LANG['addkey']['form']['value']}(${LANG['addkey']['info']['onemember']})` },
+            { type: 'input', name: 'set_value', rows: 10, inputWidth: 250, required: true}
+          ]},
+          { type: 'block', hidden: keytype != "zset", disabled: keytype != "zset", list: [
+            { type: 'settings', position: 'label-left', offsetLeft: 12, labelWidth: 250, inputWidth: 150 },
+            { type: 'label', label: `${LANG['addkey']['form']['value']}(${LANG['addkey']['info']['onemember']})` },
+            { type: 'input', name: 'zset_value', rows: 4, inputWidth: 250, required: true},
+            { type: 'label', label: `${LANG['addkey']['form']['score']}(${LANG['addkey']['info']['score']})` },
+            { type: 'input', name: 'zset_score', inputWidth: 250, required: true, validate: 'ValidNumeric', }
+          ]},
+          { type: 'block', hidden: keytype != "hash", disabled: keytype != "hash", list: [
+            { type: 'settings', position: 'label-left', offsetLeft: 12, labelWidth: 250, inputWidth: 150 },
+            { type: 'label', label: `${LANG['addkey']['form']['hashkey']}(${LANG['addkey']['info']['covernx']})` },
+            { type: 'input', name: 'hash_key', rows: 3, inputWidth: 250, required: true},
+            { type: 'label', label: LANG['addkey']['form']['hashvalue'] },
+            { type: 'input', name: 'hash_value', rows: 4, inputWidth: 250, required: true}
+          ]},
+        ]}
+    ], true);
+    toolbar.attachEvent('onClick', (btnid)=>{
+      switch(btnid){
+        case 'clear':
+          form.clear();
+          break;
+        case 'add':
+          if(!form.validate()) {
+            return toastr.warning(LANG['addkey']['info']['warning'], LANG_T['warning']);
+          }
+          let addcmd = "";
+          // 解析数据
+          let data = form.getValues();
+          switch(keytype){
+            case "list":
+              addcmd += that.redisutil.makeCommand('LPUSH', rediskey, data["list_value"]);
+              break;
+            case "set":
+              addcmd += that.redisutil.makeCommand("SADD", rediskey, data["set_value"]);
+              break;
+            case "zset":
+              addcmd += that.redisutil.makeCommand("ZADD", rediskey, data["zset_score"], data["zset_value"]);
+              break;
+            case "hash":
+              addcmd += that.redisutil.makeCommand("HSET", rediskey, data["hash_key"], data["hash_value"]);
+              break;
+          }
+          if(addcmd.length <= 0) {
+            return toastr.warning(LANG['addkey']['info']['warning'], LANG_T['warning']);
+          }
+          let cmd = "";
+          let needpass = false;
+          if (conf['passwd'].length > 0) {
+            cmd = that.redisutil.makeCommand('AUTH', conf['passwd']);
+            needpass = true;
+          }
+          cmd += that.redisutil.makeCommand('SELECT', `${db}`);
+          cmd += addcmd;
+          that.plugincore.setHost(conf['host']);
+          that.core.request({
+            _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
+          }).then((res)=>{
+            let ret = res['text'];
+            that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr) => {
+              let retval;
+              if(needpass) {
+                if(errarr.length != 3 || valarr.length != 3){
+                  toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                  that.redisutil.parser = that.redisutil.initParser();
+                  return
+                }
+                if(errarr[0].length > 0) {
+                  toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
+                  return
+                }
+                if(errarr[2].length > 0) {
+                  toastr.error(errarr[2].toString(), LANG_T['error']);
+                  return
+                }
+                retval = valarr[2];
+              }else{
+                if(errarr.length != 2 || valarr.length != 2){
+                  toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                  that.redisutil.parser = that.redisutil.initParser();
+                  return
+                }
+                if(errarr[1].length > 0) {
+                  toastr.error(errarr[1].toString(), LANG_T['error']);
+                  return
+                }
+                retval = valarr[1];
+              }
+              switch(keytype){
+                case 'zset':
+                  // 0 添加已经存在元素
+                  if (typeof retval == "number" && retval == 0){
+                    toastr.success(LANG['addkey']['info']['zsetsuccess'](data['zset_value']), LANG_T['success']);
+                  }else{
+                    toastr.success(LANG['addkey']['info']['success'], LANG_T['success']);
+                  }
+                  break;
+                case 'hash':
+                  // 0 添加已经存在元素
+                  if (typeof retval == "number" && retval == 0){
+                    toastr.success(LANG['addkey']['info']['hashsuccess'](data['hash_key']), LANG_T['success']);
+                  }else{
+                    toastr.success(LANG['addkey']['info']['success'], LANG_T['success']);
+                  }
+                  break;
+                default:
+                  // 可能是 OK 可能是 int
+                  if((typeof retval ==  "object" && new Buffer(retval).toString() == "OK") || (typeof retval == "number" && parseInt(retval) > 0)) {
+                    toastr.success(LANG['addkey']['info']['success'], LANG_T['success']);
+                  }else{
+                    toastr.error(LANG['addkey']['info']['error'], LANG_T['error']);
+                    that.getKeysValue(id, db, rediskey);
+                    return
+                  }
+                  break;
+              }
+              win.close();
+              that.getKeysValue(id, db, rediskey);
+            });
+          }).catch((err)=>{
+            that.redisutil.parser = that.redisutil.initParser();
+          });
+          break;
+      }
+    });
+  }
+
+  /**
+   * 删除元素
+   */
+  delKeyItem(opt) {
+    let that = this;
+    const id = opt['id'];
+    const conf = opt['conf'];
+    const db = opt['db'];
+    const rediskey = opt['rediskey'];
+    const keytype = opt['keytype'];
+    const idx = opt['idx'];
+    const ivalue = new Buffer(opt['ivalue_b64'], "base64").toString();
+    if(ivalue.length <= 0){
+      toastr.warning(LANG['delitem']['error']['novalue'], LANG_T['warning']);
+      return
+    }
+    layer.confirm(
+      LANG['delitem']['confirm'],
+      {
+        icon: 2,
+        shift: 6,
+        title: `<i class="fa fa-trash"></i> ${LANG['delitem']['title']}`,
+      },
+      (_) => {
+        layer.close(_);
+        var needpass = false;
+        var cmd = "";
+        if (conf['passwd'].length > 0) {
+          cmd += that.redisutil.makeCommand('AUTH', conf['passwd']);
+          needpass = true;
+        }
+        cmd += that.redisutil.makeCommand('SELECT', db);
+        switch(keytype){
+          case 'list':
+            // 第一步,修改值
+            cmd += that.redisutil.makeCommand('LSET', rediskey, String(idx), "---VALUE_REMOVED_BY_ANTSWORD---");
+            // 第二步,删除 ---VALUE_REMOVED_BY_ANTSWORD---
+            cmd += that.redisutil.makeCommand('LREM', rediskey, "0", "---VALUE_REMOVED_BY_ANTSWORD---");
+            break;
+          case 'set':
+            cmd += that.redisutil.makeCommand('SREM', rediskey, ivalue);
+            break;
+          case 'zset':
+            cmd += that.redisutil.makeCommand('ZREM', rediskey, ivalue);
+            break;
+          case 'hash':
+            cmd += that.redisutil.makeCommand('HDEL', rediskey, ivalue);
+            break;
+        }
+        that.core.request({
+          _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
+        }).then((res)=>{
+          let ret = res['text'];
+          that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr) => {
+            let retval;
+            // 检查解析是否正确
+            if(needpass) {
+              if (keytype == 'list' && (errarr.length != 4 || valarr.length != 4)){
+                toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                that.redisutil.parser = that.redisutil.initParser();
+                return
+              }
+              if(keytype != 'list' && (errarr.length != 3 || valarr.length != 3)){
+                toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                that.redisutil.parser = that.redisutil.initParser();
+                return
+              }
+            }else{
+              if (keytype == 'list' && (errarr.length != 3 || valarr.length != 3)){
+                toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                that.redisutil.parser = that.redisutil.initParser();
+                return
+              }
+              if (keytype != 'list' && (errarr.length != 2 || valarr.length != 2)){
+                toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                that.redisutil.parser = that.redisutil.initParser();
+                return
+              }
+            }
+            // 检查认证情况
+            if(needpass) {
+              if(errarr[0].length > 0) {
+                toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
+                return
+              }
+              errarr = errarr.slice(1);
+              valarr = valarr.slice(1);
+            }
+            if(errarr[1].length > 0) {
+              toastr.error(errarr[1].toString(), LANG_T['error']);
+            }
+            // 针对 list 额外检查重命名情况
+            if(keytype == "list") {
+              if(errarr[2].length > 0) {
+                toastr.error(errarr[2].toString(), LANG_T['error']);
+              }
+              retval = valarr[2];
+            }else{
+              retval = valarr[1];
+            }
+
+            if((typeof retval ==  "object" && new Buffer(retval).toString() == "OK") || (typeof retval == "number" && parseInt(retval) > 0)) {
+              toastr.success(LANG['delitem']['success'], LANG_T['success']);
+            }else{
+              toastr.error(LANG['delitem']['error'], LANG_T['error']);
+            }
+            that.getKeysValue(id, db, rediskey);
+            return
+          });
+        }).catch((err)=>{
+          that.redisutil.parser = that.redisutil.initParser();
+        });
+      });
+  }
+  
+  editZsetKeyScore(opt) {
+    let that = this;
+    const id = opt['id'];
+    const conf = opt['conf'];
+    const db = opt['db'];
+    const rediskey = opt['rediskey'];
+    const idx = opt['idx'];
+    const ivalue = new Buffer(opt['ivalue_b64'], "base64").toString();
+    const ivalue2 = new Buffer(opt['ivalue2_b64'], "base64").toString();
+    layer.prompt({
+      value: ivalue2,
+      title: LANG['edititem']['zset']['title'],
+    },(value, index, elem) => {
+      layer.close(index);
+      var needpass = false;
+      var cmd = "";
+      if (conf['passwd'].length > 0) {
+        cmd += that.redisutil.makeCommand('AUTH', conf['passwd']);
+        needpass = true;
+      }
+      cmd += that.redisutil.makeCommand('SELECT', db);
+      
+      cmd += that.redisutil.makeCommand('ZREM', rediskey, ivalue);
+      cmd += that.redisutil.makeCommand('ZADD', rediskey, value, ivalue);
+      that.core.request({
+        _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
+      }).then((res)=>{
+        let ret = res['text'];
+        that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
+          var retval;
+          if(needpass) {
+            if(errarr.length != 4 || valarr.length != 4){
+              toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+              that.redisutil.parser = that.redisutil.initParser();
+              return
+            }
+            if(errarr[0].length > 0) {
+              toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
+              return
+            }
+            if(errarr[3].length > 0) {
+              toastr.error(errarr[3].toString(), LANG_T['error']);
+              return
+            }
+            retval = valarr[3];
+          }else{
+            if(errarr.length != 3 || valarr.length != 3){
+              toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+              that.redisutil.parser = that.redisutil.initParser();
+              return
+            }
+            if(errarr[2].length > 0) {
+              toastr.error(errarr[2].toString(), LANG_T['error']);
+              return
+            }
+            retval = valarr[2];
+          }
+          if(parseInt(retval) > 0) {
+            toastr.success(LANG['edititem']['success'],LANG_T['success']);
+            that.getKeysValue(id, db, rediskey);
+          }else{
+            toastr.error(LANG['edititem']['error'],LANG_T['error']);
+            return
+          }
+        });
+      }).catch((err)=>{
+        that.redisutil.parser = that.redisutil.initParser();
+      });
+    });
+  }
+
+  editHashKeyValue(opt) {
+    let that = this;
+    const id = opt['id'];
+    const conf = opt['conf'];
+    const db = opt['db'];
+    const rediskey = opt['rediskey'];
+    const idx = opt['idx'];
+    const ivalue = new Buffer(opt['ivalue_b64'], "base64").toString();
+    const ivalue2 = new Buffer(opt['ivalue2_b64'], "base64").toString();
+    layer.prompt({
+      value: ivalue2,
+      title: LANG['edititem']['zset']['title'],
+    },(value, index, elem) => {
+      layer.close(index);
+      var needpass = false;
+      var cmd = "";
+      if (conf['passwd'].length > 0) {
+        cmd += that.redisutil.makeCommand('AUTH', conf['passwd']);
+        needpass = true;
+      }
+      cmd += that.redisutil.makeCommand('SELECT', db);
+      cmd += that.redisutil.makeCommand('HSET', rediskey, ivalue, value);
+      that.core.request({
+        _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
+      }).then((res)=>{
+        let ret = res['text'];
+        that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
+          var retval;
+          if(needpass) {
+            if(errarr.length != 3 || valarr.length != 3){
+              toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+              that.redisutil.parser = that.redisutil.initParser();
+              return
+            }
+            if(errarr[0].length > 0) {
+              toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
+              return
+            }
+            if(errarr[2].length > 0) {
+              toastr.error(errarr[2].toString(), LANG_T['error']);
+              return
+            }
+            retval = valarr[2];
+          }else{
+            if(errarr.length != 2 || valarr.length != 2){
+              toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+              that.redisutil.parser = that.redisutil.initParser();
+              return
+            }
+            if(errarr[1].length > 0) {
+              toastr.error(errarr[1].toString(), LANG_T['error']);
+              return
+            }
+            retval = valarr[1];
+          }
+          if(parseInt(retval) == 0) {
+            toastr.success(LANG['edititem']['success'],LANG_T['success']);
+            that.getKeysValue(id, db, rediskey);
+          }else{
+            toastr.error(LANG['edititem']['error'],LANG_T['error']);
+            return
+          }
+        });
+      }).catch((err)=>{
+        that.redisutil.parser = that.redisutil.initParser();
+      });
+    });
+  }
   resetView() {
     this.KeyBinaryData = new Buffer('');
     this.detail.toolbar.setItemText('data_size', 'Size:0b');
     this.detail.editor.session.setValue("");
     this.keyview.grid.clearAll();
+    this.keyview.toolbar.getInput("data_key").value = "";
     this.keyview.toolbar.setItemText('data_key', '');
     this.keyview.toolbar.setItemText('data_size', '');
     this.keyview.toolbar.setItemText('data_ttl', '');
@@ -1848,6 +2367,7 @@ class Plugin {
   }
 
   disableToolbar() {
+    this.resetView();
     this.list.toolbar.disableItem('edit');
     this.list.toolbar.disableItem('del');  
   }

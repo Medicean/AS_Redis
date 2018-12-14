@@ -46,6 +46,9 @@ class RedisUtil {
     let cmds = Array();
     cmds.push(`*${args.length}\r\n`);
     args.forEach((arg)=> {
+      if(typeof arg == 'number') {
+        arg = String(arg);
+      }
       cmds.push(`\$${new Buffer(arg).length}\r\n${arg}\r\n`);
     })
     return cmds.join("")

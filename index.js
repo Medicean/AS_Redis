@@ -1059,6 +1059,8 @@ class Plugin {
             this.list.imgs[0],
             this.list.imgs[0]
           );
+          // 刷新 UI
+          this.parse();
           break;
       }
     });

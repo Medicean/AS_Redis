@@ -1158,7 +1158,7 @@ class Plugin {
   // 获取所有 DB
   getDatabases(id) {
     let that = this;
-    // that.list.layout.progressOn();
+    that.list.layout.progressOn();
     const conf = that.pluginconf[id];
     that.tree.deleteChildItems(`conn::${id}`);
     that.plugincore.setHost(conf['host']);
@@ -1172,6 +1172,7 @@ class Plugin {
     that.core.request({
       _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
     }).then((res)=>{
+      that.list.layout.progressOff();
       let ret = res['text'];
       that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
         let value = "";
@@ -1179,6 +1180,7 @@ class Plugin {
           if(errarr.length != 2 || valarr.length != 2){
             toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
             that.redisutil.parser = that.redisutil.initParser();
+            that.list.layout.progressOff();
             return
           }
           if(errarr[0] != "") {
@@ -1249,13 +1251,13 @@ class Plugin {
       console.log(err);
       that.redisutil.parser = that.redisutil.initParser();
       toastr.error(LANG['error']['database'](err['status'] || JSON.stringify(err)), LANG_T['error']);
-      // that.list.layout.progressOff();
+      that.list.layout.progressOff();
     });
   }
   // 获取当前 db 下的 Key
   getRedisKeys(id, db) {
     let that = this;
-    // that.list.layout.progressOn();
+    that.list.layout.progressOn();
     const conf = that.pluginconf[id];
     that.plugincore.setHost(conf['host']);
     let needpass = false;
@@ -1269,6 +1271,7 @@ class Plugin {
     that.core.request({
       _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
     }).then((res)=>{
+      that.list.layout.progressOff();
       let ret = res['text'];
       that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
         let value = "";
@@ -1340,7 +1343,7 @@ class Plugin {
       // 重新初始化 parser
       that.redisutil.parser = that.redisutil.initParser();
       toastr.error(LANG['error']['getkeys'](err['status'] || JSON.stringify(err)), LANG_T['error']);
-      // that.list.layout.progressOff();
+      that.list.layout.progressOff();
     });
   }
 

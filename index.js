@@ -970,7 +970,8 @@ class Plugin {
   }
   // 加载配置列表
   parse() {
-    const info = antSword['ipcRenderer'].sendSync('shell-findOne', this.opt['_id']);
+    let info = antSword['ipcRenderer'].sendSync('shell-findOne', this.opt['_id']);
+    info['plugins'] = info['plugins'] || {};
     this.opt = info;
     this.pluginconf = this.opt['plugins'][this.dbname] || {};
 

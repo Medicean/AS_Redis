@@ -11,6 +11,7 @@ module.exports = {
       database: {
         addkey: 'New Key',
         reload: 'Refresh',
+        terminal: 'Terminal',
       }
     }
   },
@@ -106,6 +107,7 @@ module.exports = {
     getkeys: (err) => antSword.noxss(`Getting Key failed,error msg: ${err}`),
     notimpl: (typevalue) => antSword.noxss(`Type ${typevalue} not support.`),
     parseerr: `Parse response error, please try again.`,
+    notimplselect: 'Does not support the SELECT DB in the terminal',
   },
   add: {
     form: {
@@ -138,5 +140,9 @@ module.exports = {
       title: 'Delete configuration',
       confirm: 'Are you sure you want to delete this configuration?',
     },
+  },
+  terminal: {
+    title: 'Redis Terminal',
+    banner: `Usage:\n\n 1)Press the [Tab] key twice to automatically complete the command;\n 2)Temporarily does not support switching db under the terminal;\n 3)After executing the command, the data may not be returned normally, and try several times;`,
   },
 }

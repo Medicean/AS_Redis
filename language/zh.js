@@ -11,6 +11,7 @@ module.exports = {
       database: {
         addkey: '新增Key',
         reload: '刷新',
+        terminal: '执行指令',
       }
     }
   },
@@ -106,6 +107,7 @@ module.exports = {
     getkeys: (err) => antSword.noxss(`获取 Key 失败,原因: ${err}`),
     notimpl: (typevalue) => antSword.noxss(`暂不支持${typevalue}类型的Key`),
     parseerr: `解析数据失败,请重试`,
+    notimplselect: '暂不支持在终端下切换 DB',
   },
   add: {
     form: {
@@ -138,5 +140,9 @@ module.exports = {
       title: '删除配置',
       confirm: '确定要删除该配置吗?',
     },
+  },
+  terminal: {
+    title: 'Redis 虚拟命令行',
+    banner: `使用帮助:\n\n 1)快速按两下[Tab]键自动补全指令;\n 2)暂不支持在终端下切换db;\n 3)执行命令后可能无法正常返回数据,多尝试几次;`,
   },
 }

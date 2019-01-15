@@ -5,7 +5,8 @@ const LANG_T = antSword['language']['toastr'];
 // const Database = require('./libs/database');
 const RedisUtil = require('./libs/redisutil');
 const Core = require('./libs/core');
-
+const WIN = require('ui/window');
+const redis_commands = require('redis-commands');
 class Plugin {
   constructor(opt) {
     antSword['test'] = this;
@@ -139,6 +140,12 @@ class Plugin {
               icon: 'fa fa-refresh',
               action: ()=>{
                 this.getRedisKeys(arr[1].split(":")[0], new Buffer(arr[1].split(":")[1],'base64').toString());
+              }
+            }, {
+              text: LANG['list']['bmenu']['database']['terminal'],
+              icon: 'fa fa-terminal',
+              action: ()=>{
+                this.initRedisTerminal(arr[1].split(":")[0], new Buffer(arr[1].split(":")[1],'base64').toString());
               }
             }
           ], event);
@@ -2353,6 +2360,105 @@ class Plugin {
       }).catch((err)=>{
         that.redisutil.parser = that.redisutil.initParser();
       });
+    });
+  }
+  // 创建用户 redis 命令行
+  initRedisTerminal(id, db) {
+    let that = this;
+    const conf = that.pluginconf[id];
+    that.plugincore.setHost(conf['host']);
+    let needpass = false;
+    let basecmd = "";
+    if (conf['passwd'].length > 0) {
+      basecmd += that.redisutil.makeCommand('AUTH', conf['passwd']);
+      needpass = true;
+    }
+    basecmd += that.redisutil.makeCommand('SELECT', `${db}`);
+
+    let win = new WIN({
+      title: `${LANG['terminal']['title']} - DB[${db}]`,
+      height: 544,
+      width: 820,
+    });
+    let hash = win.win.getId().split("_")[1];
+    win.win.attachHTMLString(`
+    <div
+      id="div_redisterminal_${hash}"
+      style="height:100%;margin:0;padding:0 5px 1px 5px;overflow:scroll;--size:1;"
+    ></div>
+    `);
+    let banner = `${LANG['terminal']['banner']}`;
+    let promptStr = `[[b;cyan;]${conf['host']}][[b;#E80000;](${db})]> `;
+    let dom = $(`#div_redisterminal_${hash}`);
+    let terminal = dom.terminal( (cmd, term) => {
+      if (!cmd) { return false }
+      cmd = cmd.trim();
+      if (cmd === 'exit' || cmd === 'quit') { return win.close() }
+      if (cmd === 'cls' || cmd === 'clear') { return term.clear() }
+      if (cmd.toLowerCase().startsWith('select')){
+        toastr.warning(LANG['error']['notimplselect'], LANG_T['warning']);
+        return
+      }
+      term.pause();
+      let usercmd = basecmd + that.redisutil.makeCommand(...cmd.split(' '));
+      that.core.request({
+        _: that.plugincore.template[that.opt['type']](new Buffer(usercmd))
+      }).then((res)=>{
+        let ret = res['text'];
+        that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
+          var retval;
+          if(needpass) {
+            if(errarr.length != 3 || valarr.length != 3){
+              toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+              that.redisutil.parser = that.redisutil.initParser();
+              return
+            }
+            if(errarr[0] != "") {
+              toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
+              return
+            }
+            if(errarr[2] != "") {
+              toastr.error(errarr[2].toString(), LANG_T['error']);
+              return
+            }
+            retval = valarr[2];
+          }else{
+            if(errarr.length != 2 || valarr.length != 2){
+              toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+              that.redisutil.parser = that.redisutil.initParser();
+              return
+            }
+            if(errarr[1] != "") {
+              toastr.error(errarr[1].toString(), LANG_T['error']);
+              return
+            }
+            retval = valarr[1];
+          }
+          let output = "";
+          if (retval instanceof Array){
+            retval.forEach((_val, _index)=>{
+              output += `${_index+1}) ${_val.toString()}\n`;
+            });
+            output = output.slice(0,-1);
+          }else if(retval instanceof Buffer){
+            output = retval.toString();
+          }
+          term.echo(
+            antSword.noxss(output, false)
+          );
+        });
+        term.set_prompt(promptStr);
+        term.resume();
+      });
+    }, {
+      greetings: banner,
+      name: `redisterminal_${hash}`,
+      prompt: promptStr,
+      // numChars: 100,
+      exit: false,
+      completion: (value, callback) => {
+        callback(redis_commands.list)
+      },
     });
   }
   resetView() {

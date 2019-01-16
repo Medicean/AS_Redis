@@ -6,6 +6,12 @@
 
 通过 WebShell 对内网中的 Redis 进行管理。
 
+## 演示截图
+
+![](https://i.loli.net/2019/01/16/5c3f22458f0b2.png)
+
+![](https://i.loli.net/2019/01/16/5c3f2134dcd8f.png)
+
 ## TODO List
 
 该插件目前处于开发中
@@ -47,6 +53,7 @@
     - [x] Key
     - [x] Value
   - [x] 新增元素
+- [x] 虚拟命令行
 
 ## 安装
 

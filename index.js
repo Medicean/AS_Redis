@@ -7,6 +7,8 @@ const RedisUtil = require('./libs/redisutil');
 const Core = require('./libs/core');
 const WIN = require('ui/window');
 const redis_commands = require('redis-commands');
+const split_string = require('split-string');
+
 class Plugin {
   constructor(opt) {
     antSword['test'] = this;
@@ -2400,7 +2402,18 @@ class Plugin {
         return
       }
       term.pause();
-      let usercmd = basecmd + that.redisutil.makeCommand(...cmd.split(' '));
+      let cmds = [];
+      // 由于目前版本的 chrome 不支持正向后瞻和负向后瞻,待未来升级框架后使用该表达式
+      // cmd.match(/(?<=\s\").+?(?<!\\)(?=")|(?<=\s').+?(?<!\\)(?=')|([_/\w]+)/g)
+      split_string(cmd, {quotes:['"', "'"],separator:' ',brackets:true }).forEach((v)=>{
+        var tmpv = v;
+        if(tmpv.startsWith('"') || tmpv.startsWith("'")){
+          tmpv = tmpv.substring(1,tmpv.length-1);
+          tmpv = tmpv.replace(/\\(.)/mg, "$1"); // 只进行一次 stripslashes
+        }
+        cmds.push(tmpv);
+      })
+      let usercmd = basecmd + that.redisutil.makeCommand(...cmds);
       that.core.request({
         _: that.plugincore.template[that.opt['type']](new Buffer(usercmd))
       }).then((res)=>{

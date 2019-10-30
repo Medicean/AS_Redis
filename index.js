@@ -14,7 +14,7 @@ class Plugin {
     antSword['test'] = this;
     let minVer = "2.0.2.1"
     let curVer = antSword.package.version || "0.0.0";
-    if(this.CompVersion(minVer, curVer) == false) {
+    if (this.CompVersion(minVer, curVer) == false) {
       toastr.error(LANG['error']['minvererr'](minVer, curVer), LANG_T['error']);
       return
     }
@@ -45,7 +45,7 @@ class Plugin {
     this.list = this.initList(this.layout_main.cells('a'));
     this.keyview = this.initKeyView(this.layout_right.cells('a'));
     this.detail = this.initDetail(this.layout_right.cells('b'));
-    
+
     this.disableResultToolbar();
 
     // 1. 初始化
@@ -65,72 +65,73 @@ class Plugin {
       const arr = tmp[1].split(':');
       this.dbconf = this.pluginconf[arr[0]];
       // 设置当前数据库
-      if (arr.length > 1 ){
-        this.dbconf['database'] = new Buffer(arr[1], 'base64').toString();
+      if (arr.length > 1) {
+        this.dbconf['database'] = Buffer.from(arr[1], 'base64').toString();
       }
       if (arr.length > 2) {
         this.enableResultToolbar();
-      }else{
+      } else {
         this.disableResultToolbar();
       }
-      switch(tmp[0]){
+      switch (tmp[0]) {
         case 'rediskeys':
           // 暂时不考虑命名空间解析问题
           // let _keys = arr;
           // this.getKeysValue(
           //   _keys[0],
-          //   new Buffer(_keys[1], 'base64').toString(),
-          //   new Buffer(_keys[2], 'base64').toString()
+          //   Buffer.from(_keys[1], 'base64').toString(),
+          //   Buffer.from(_keys[2], 'base64').toString()
           // );
-        break;
+          break;
       }
     });
     // 4. tree 双击
     this.tree.attachEvent('onDblClick', (id) => {
       const arr = id.split("::");
-      if (arr.length < 2) { throw new Error('ID ERR: ' + id)};
-      switch(arr[0]) {
+      if (arr.length < 2) {
+        throw new Error('ID ERR: ' + id)
+      };
+      switch (arr[0]) {
         case 'conn':
           this.getDatabases(arr[1]);
           break;
         case 'database':
           let _db = arr[1].split(':');
-          this.getRedisKeys(_db[0], new Buffer(_db[1], 'base64').toString());
+          this.getRedisKeys(_db[0], Buffer.from(_db[1], 'base64').toString());
           break;
         case 'rediskeys':
           // 暂时不考虑命名空间解析问题
           let _keys = arr[1].split(':');
           this.getKeysValue(
             _keys[0],
-            new Buffer(_keys[1], 'base64').toString(),
-            new Buffer(_keys[2], 'base64').toString()
+            Buffer.from(_keys[1], 'base64').toString(),
+            Buffer.from(_keys[2], 'base64').toString()
           );
           break;
       }
     });
-    
+
     // 5. tree 右键::功能菜单
     this.tree.attachEvent('onRightClick', (id, event) => {
       this.tree.selectItem(id);
       const arr = id.split('::');
-      if (arr.length < 2) { throw new Error('ID ERR: ' + id) };
-      switch(arr[0]) {
+      if (arr.length < 2) {
+        throw new Error('ID ERR: ' + id)
+      };
+      switch (arr[0]) {
         case 'conn':
           this.tree.callEvent('onClick', [id]);
-          bmenu([
-            {
-              text: LANG['list']['bmenu']['conn']['reload'],
-              icon: 'fa fa-refresh',
-              action: ()=>{
-                this.getDatabases( arr[1].split(":")[0]);
-              }
+          bmenu([{
+            text: LANG['list']['bmenu']['conn']['reload'],
+            icon: 'fa fa-refresh',
+            action: () => {
+              this.getDatabases(arr[1].split(":")[0]);
             }
-          ], event);
+          }], event);
           break;
         case 'database':
           this.tree.callEvent('onClick', [id]);
-          bmenu([
-            {
+          bmenu([{
               text: LANG['list']['bmenu']['database']['addkey'],
               icon: 'fa fa-plus-circle',
               action: this.addKey.bind(this)
@@ -140,14 +141,14 @@ class Plugin {
             }, {
               text: LANG['list']['bmenu']['database']['reload'],
               icon: 'fa fa-refresh',
-              action: ()=>{
-                this.getRedisKeys(arr[1].split(":")[0], new Buffer(arr[1].split(":")[1],'base64').toString());
+              action: () => {
+                this.getRedisKeys(arr[1].split(":")[0], Buffer.from(arr[1].split(":")[1], 'base64').toString());
               }
             }, {
               text: LANG['list']['bmenu']['database']['terminal'],
               icon: 'fa fa-terminal',
-              action: ()=>{
-                this.initRedisTerminal(arr[1].split(":")[0], new Buffer(arr[1].split(":")[1],'base64').toString());
+              action: () => {
+                this.initRedisTerminal(arr[1].split(":")[0], Buffer.from(arr[1].split(":")[1], 'base64').toString());
               }
             }
           ], event);
@@ -166,20 +167,22 @@ class Plugin {
    * @param {String} curVer 当前版本
    * @return {Boolean}
    */
-   CompVersion(minVer, curVer) {
+  CompVersion(minVer, curVer) {
     // 如果版本相同
-    if (curVer === minVer) { return true }
+    if (curVer === minVer) {
+      return true
+    }
     let currVerArr = curVer.split(".");
     let minVerArr = minVer.split(".");
     let len = Math.max(currVerArr.length, minVerArr.length);
     for (let i = 0; i < len; i++) {
-        let minVal = ~~minVerArr[i],
-            curVal = ~~currVerArr[i];
-        if (minVal < curVal) {
-            return true;
-        } else if (minVal > curVal) {
-            return false;
-        }
+      let minVal = ~~minVerArr[i],
+        curVal = ~~currVerArr[i];
+      if (minVal < curVal) {
+        return true;
+      } else if (minVal > curVal) {
+        return false;
+      }
     }
     return false;
   }
@@ -202,15 +205,35 @@ class Plugin {
 
     // 左侧拦toolbar
     const toolbar = layout.attachToolbar();
-    toolbar.loadStruct([
-      { id: 'add', text: LANG['list']['add'], icon: 'plus-circle', type: 'button' },
-      { type: 'separator' },
-      { id: 'edit', text: LANG['list']['edit'], icon: 'edit', type: 'button', disabled: true },
-      { type: 'separator' },
-      { id: 'del', text: LANG['list']['del'], icon: 'trash-o', type: 'button', disabled: true }
+    toolbar.loadStruct([{
+        id: 'add',
+        text: LANG['list']['add'],
+        icon: 'plus-circle',
+        type: 'button'
+      },
+      {
+        type: 'separator'
+      },
+      {
+        id: 'edit',
+        text: LANG['list']['edit'],
+        icon: 'edit',
+        type: 'button',
+        disabled: true
+      },
+      {
+        type: 'separator'
+      },
+      {
+        id: 'del',
+        text: LANG['list']['del'],
+        icon: 'trash-o',
+        type: 'button',
+        disabled: true
+      }
     ]);
     toolbar.attachEvent('onClick', (id) => {
-      switch(id) {
+      switch (id) {
         case 'add':
           this.addConf();
           break;
@@ -222,7 +245,7 @@ class Plugin {
           break;
       }
     });
-    
+
     return {
       imgs: imgs,
       layout: layout,
@@ -236,22 +259,71 @@ class Plugin {
 
     layout.setText(`<i class="fa fa-code"></i> ${LANG['keyview']['title']}`);
     // layout.setHeight('100');
-    
+
     const toolbar = layout.attachToolbar();
-    toolbar.loadStruct([
-      { id: 'data_type', type: 'text', text: "" },
-      { id: 'data_key', type: 'buttonInput', enabled: false, disabled: true, text: "" },
-      { id: 'data_size', type: 'text', text: "" },
-      { id: 'data_ttl_label', type: 'text', text: "TTL:" },
-      { id: 'data_ttl', type: 'text', text: "" },
-      { type: 'separator' },
-      { id: 'rename', type: 'button', icon: 'edit', text: 'Rename' },
-      { type: 'separator' },
-      { id: 'del', type: 'button', icon: 'remove', text: 'Delete' },
-      { type: 'separator' },
-      { id: 'setttl', type: 'button', icon:'cogs', text: 'SetTTL' },
-      { type: 'separator' },
-      { id: 'reload', type: 'button', icon:'refresh', text: '重载键值' },
+    toolbar.loadStruct([{
+        id: 'data_type',
+        type: 'text',
+        text: ""
+      },
+      {
+        id: 'data_key',
+        type: 'buttonInput',
+        enabled: false,
+        disabled: true,
+        text: ""
+      },
+      {
+        id: 'data_size',
+        type: 'text',
+        text: ""
+      },
+      {
+        id: 'data_ttl_label',
+        type: 'text',
+        text: "TTL:"
+      },
+      {
+        id: 'data_ttl',
+        type: 'text',
+        text: ""
+      },
+      {
+        type: 'separator'
+      },
+      {
+        id: 'rename',
+        type: 'button',
+        icon: 'edit',
+        text: 'Rename'
+      },
+      {
+        type: 'separator'
+      },
+      {
+        id: 'del',
+        type: 'button',
+        icon: 'remove',
+        text: 'Delete'
+      },
+      {
+        type: 'separator'
+      },
+      {
+        id: 'setttl',
+        type: 'button',
+        icon: 'cogs',
+        text: 'SetTTL'
+      },
+      {
+        type: 'separator'
+      },
+      {
+        id: 'reload',
+        type: 'button',
+        icon: 'refresh',
+        text: '重载键值'
+      },
     ]);
 
     const grid = layout.attachGrid();
@@ -262,18 +334,18 @@ class Plugin {
     grid.setColSorting('int');
     grid.setColAlign('left,left,left');
     // grid.setEditable(true);
-    grid.enableAutoWidth(true,600,100);
+    grid.enableAutoWidth(true, 600, 100);
 
     grid.attachEvent('onRowSelect', (id, lid, event) => {
       bmenu.hide();
       let b64val = grid.getRowAttribute(id, 'b64val');
-      let value = new Buffer(b64val, 'base64').toString();
+      let value = Buffer.from(b64val, 'base64').toString();
       that.detail.editor.session.setValue(value);
       that.detail.toolbar.setItemText('data_size', `Size: ${that.keySize(value.length)}`);
     });
-    
+
     $('.objbox').on('contextmenu', (e) => {
-      (e.target.nodeName === 'DIV' && grid.callEvent instanceof Function && antSword['tabbar'].getActiveTab().startsWith('tab_redis_')) ? grid.callEvent('onRightClick', [-1, -1, e]) : null;
+      (e.target.nodeName === 'DIV' && grid.callEvent instanceof Function && antSword['tabbar'].getActiveTab().startsWith('tab_redis_')) ? grid.callEvent('onRightClick', [-1, -1, e]): null;
     });
 
     $('.objbox').on('click', (e) => {
@@ -282,29 +354,31 @@ class Plugin {
     // TODO grid 右键菜单
     // 修改 score 和 hash value
     // 暂时可通过添加重复的 field 来完成
-    grid.attachEvent('onRightClick', function(id, lid, event) {
-      if(id != -1) {
+    grid.attachEvent('onRightClick', function (id, lid, event) {
+      if (id != -1) {
         grid.selectRowById(id);
       }
-      if(that.tree.getSelected().split("::")[0] != "rediskeys") {
+      if (that.tree.getSelected().split("::")[0] != "rediskeys") {
         return
       }
       let selecttree = that.tree.getSelected().split("::")[1];
       const treeid = selecttree.split(":")[0];
       const conf = that.pluginconf[treeid];
-      const db = new Buffer(selecttree.split(":")[1], 'base64').toString();
-      const selkey = new Buffer(selecttree.split(":")[2], 'base64').toString();
+      const db = Buffer.from(selecttree.split(":")[1], 'base64').toString();
+      const selkey = Buffer.from(selecttree.split(":")[2], 'base64').toString();
       if (toolbar.getInput("data_key").value != selkey) {
         // 选择的 Key 和 界面显示的 Key 不一致
         return
       }
       const keytype = toolbar.getItemText("data_type").toLowerCase();
-      if( keytype == "string" || keytype == "") {
+      if (keytype == "string" || keytype == "") {
         // String 不需要
         return
       }
-      let menu = [
-        { text: LANG['keyview']['contextmenu']['add'], icon: 'fa fa-plus-circle', action:()=>{
+      let menu = [{
+          text: LANG['keyview']['contextmenu']['add'],
+          icon: 'fa fa-plus-circle',
+          action: () => {
             that.insertKeyItem({
               id: treeid,
               conf: conf,
@@ -314,20 +388,30 @@ class Plugin {
             });
           }
         },
-        { text: LANG['keyview']['contextmenu']['del'], icon: 'fa fa-trash', disabled: id <= 0, action:()=>{
+        {
+          text: LANG['keyview']['contextmenu']['del'],
+          icon: 'fa fa-trash',
+          disabled: id <= 0,
+          action: () => {
             that.delKeyItem({
               id: treeid,
               conf: conf,
               db: db,
               rediskey: selkey,
               keytype: keytype,
-              idx: parseInt(id-1), // 移除的序号(删除List时需要)
+              idx: parseInt(id - 1), // 移除的序号(删除List时需要)
               ivalue_b64: grid.getRowAttribute(id, 'b64val'), // 元素的b64值
             });
           }
         },
-        {divider: true},
-        { text: LANG['keyview']['contextmenu']['edit_score'], icon: 'fa fa-edit', disabled: keytype != "zset", action:()=>{
+        {
+          divider: true
+        },
+        {
+          text: LANG['keyview']['contextmenu']['edit_score'],
+          icon: 'fa fa-edit',
+          disabled: keytype != "zset",
+          action: () => {
             that.editZsetKeyScore({
               id: treeid,
               conf: conf,
@@ -338,7 +422,11 @@ class Plugin {
             });
           }
         },
-        { text: LANG['keyview']['contextmenu']['edit_hashvalue'], icon: 'fa fa-edit', disabled: keytype != "hash", action:()=>{
+        {
+          text: LANG['keyview']['contextmenu']['edit_hashvalue'],
+          icon: 'fa fa-edit',
+          disabled: keytype != "hash",
+          action: () => {
             that.editHashKeyValue({
               id: treeid,
               conf: conf,
@@ -358,9 +446,9 @@ class Plugin {
     // let ctrl_listlayout = listlayout.cells('b');
     // view_listlayout.hideHeader();
     // ctrl_listlayout.hideHeader();
-    toolbar.attachEvent('onClick', (id)=>{
+    toolbar.attachEvent('onClick', (id) => {
       const selecttree = that.tree.getSelected().split("::")[1];
-      if(selecttree == "") {
+      if (selecttree == "") {
         that.disableResultToolbar();
         that.disableEditor();
         return
@@ -368,15 +456,15 @@ class Plugin {
       // 获取配置
       const treeid = selecttree.split(":")[0];
       const conf = that.pluginconf[treeid];
-      const db = new Buffer(selecttree.split(":")[1], 'base64').toString();
-      const oldkey = new Buffer(selecttree.split(":")[2], 'base64').toString();
+      const db = Buffer.from(selecttree.split(":")[1], 'base64').toString();
+      const oldkey = Buffer.from(selecttree.split(":")[2], 'base64').toString();
       that.plugincore.setHost(conf['host']);
-      switch(id) {
+      switch (id) {
         case 'rename':
           layer.prompt({
             value: oldkey,
             title: LANG['keyview']['rename']['prompt'],
-          },(value, index, elem) => {
+          }, (value, index, elem) => {
             layer.close(index);
             var needpass = false;
             var cmd = "";
@@ -387,50 +475,50 @@ class Plugin {
             cmd += that.redisutil.makeCommand('SELECT', db);
             cmd += that.redisutil.makeCommand('RENAME', oldkey, value);
             that.core.request({
-              _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
-            }).then((res)=>{
+              _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
+            }).then((res) => {
               let ret = res['text'];
-              that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
+              that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
                 var retval;
-                if(needpass) {
-                  if(errarr.length != 3 || valarr.length != 3){
-                    toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                if (needpass) {
+                  if (errarr.length != 3 || valarr.length != 3) {
+                    toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
                     that.redisutil.parser = that.redisutil.initParser();
                     return
                   }
-                  if(errarr[0] != "") {
+                  if (errarr[0] != "") {
                     toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
                     return
                   }
-                  if(errarr[2] != "") {
+                  if (errarr[2] != "") {
                     toastr.error(errarr[2].toString(), LANG_T['error']);
                     return
                   }
                   retval = valarr[2];
-                }else{
-                  if(errarr.length != 2 || valarr.length != 2){
-                    toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                } else {
+                  if (errarr.length != 2 || valarr.length != 2) {
+                    toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
                     that.redisutil.parser = that.redisutil.initParser();
                     return
                   }
-                  if(errarr[1] != "") {
+                  if (errarr[1] != "") {
                     toastr.error(errarr[1].toString(), LANG_T['error']);
                     return
                   }
                   retval = valarr[1];
                 }
-                if(retval.toString() == "OK") {
-                  toastr.success(LANG['keyview']['rename']['success'],LANG_T['success']);
+                if (retval.toString() == "OK") {
+                  toastr.success(LANG['keyview']['rename']['success'], LANG_T['success']);
                   that.getRedisKeys(treeid, db);
-                  var _db = new Buffer(db).toString('base64');
-                  var _newkey = new Buffer(value).toString('base64');
+                  var _db = Buffer.from(db).toString('base64');
+                  var _newkey = Buffer.from(value).toString('base64');
                   that.getKeysValue(treeid, db, value);
                   // DOM 树重新渲染需等待
                   setTimeout(() => {
                     that.tree.selectItem(`rediskeys::${treeid}:${_db}:${_newkey}`);
                   }, 100);
-                }else{
-                  toastr.error(LANG['keyview']['rename']['error'],LANG_T['error']);
+                } else {
+                  toastr.error(LANG['keyview']['rename']['error'], LANG_T['error']);
                   return
                 }
               });
@@ -439,8 +527,7 @@ class Plugin {
           break;
         case 'del':
           layer.confirm(
-            LANG['keyview']['del']['confirm'](oldkey),
-            {
+            LANG['keyview']['del']['confirm'](oldkey), {
               icon: 2,
               shift: 6,
               title: `<i class="fa fa-trash"></i> ${LANG['keyview']['del']['title']}`,
@@ -456,46 +543,46 @@ class Plugin {
               cmd += that.redisutil.makeCommand('SELECT', db);
               cmd += that.redisutil.makeCommand('DEL', oldkey);
               that.core.request({
-                _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
-              }).then((res)=>{
+                _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
+              }).then((res) => {
                 let ret = res['text'];
-                that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
+                that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
                   var retval;
-                  if(needpass) {
-                    if(errarr.length != 3 || valarr.length != 3){
-                      toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                  if (needpass) {
+                    if (errarr.length != 3 || valarr.length != 3) {
+                      toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
                       that.redisutil.parser = that.redisutil.initParser();
                       return
                     }
-                    if(errarr[0] != "") {
+                    if (errarr[0] != "") {
                       toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
                       return
                     }
-                    if(errarr[2] != "") {
+                    if (errarr[2] != "") {
                       toastr.error(errarr[2].toString(), LANG_T['error']);
                       return
                     }
                     retval = valarr[2];
-                  }else{
-                    if(errarr.length != 2 || valarr.length != 2){
-                      toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                  } else {
+                    if (errarr.length != 2 || valarr.length != 2) {
+                      toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
                       that.redisutil.parser = that.redisutil.initParser();
                       return
                     }
-                    if(errarr[1] != "") {
+                    if (errarr[1] != "") {
                       toastr.error(errarr[1].toString(), LANG_T['error']);
                       return
                     }
                     retval = valarr[1];
                   }
-                  if(parseInt(retval.toString()) > 0) {
-                    toastr.success(LANG['keyview']['del']['success'],LANG_T['success']);
+                  if (parseInt(retval.toString()) > 0) {
+                    toastr.success(LANG['keyview']['del']['success'], LANG_T['success']);
                     that.getRedisKeys(treeid, db);
                     that.resetView();
                     that.disableResultToolbar();
                     that.disableEditor();
-                  }else{
-                    toastr.error(LANG['keyview']['del']['error'],LANG_T['error']);
+                  } else {
+                    toastr.error(LANG['keyview']['del']['error'], LANG_T['error']);
                     return
                   }
                 });
@@ -508,7 +595,7 @@ class Plugin {
           layer.prompt({
             value: oldttl,
             title: LANG['keyview']['setttl']['title'],
-          },(value, index, elem) => {
+          }, (value, index, elem) => {
             layer.close(index);
             var needpass = false;
             var cmd = "";
@@ -519,43 +606,43 @@ class Plugin {
             cmd += that.redisutil.makeCommand('SELECT', db);
             cmd += that.redisutil.makeCommand('EXPIRE', oldkey, value);
             that.core.request({
-              _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
-            }).then((res)=>{
+              _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
+            }).then((res) => {
               let ret = res['text'];
-              that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
+              that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
                 var retval;
-                if(needpass) {
-                  if(errarr.length != 3 || valarr.length != 3){
-                    toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                if (needpass) {
+                  if (errarr.length != 3 || valarr.length != 3) {
+                    toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
                     that.redisutil.parser = that.redisutil.initParser();
                     return
                   }
-                  if(errarr[0] != "") {
+                  if (errarr[0] != "") {
                     toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
                     return
                   }
-                  if(errarr[2] != "") {
+                  if (errarr[2] != "") {
                     toastr.error(errarr[2].toString(), LANG_T['error']);
                     return
                   }
                   retval = valarr[2];
-                }else{
-                  if(errarr.length != 2 || valarr.length != 2){
-                    toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                } else {
+                  if (errarr.length != 2 || valarr.length != 2) {
+                    toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
                     that.redisutil.parser = that.redisutil.initParser();
                     return
                   }
-                  if(errarr[1] != "") {
+                  if (errarr[1] != "") {
                     toastr.error(errarr[1].toString(), LANG_T['error']);
                     return
                   }
                   retval = valarr[1]
                 }
-                if(parseInt(retval.toString()) == 1) {
-                  toastr.success(LANG['keyview']['setttl']['success'],LANG_T['success']);
+                if (parseInt(retval.toString()) == 1) {
+                  toastr.success(LANG['keyview']['setttl']['success'], LANG_T['success']);
                   toolbar.setItemText('data_ttl', value);
-                }else{
-                  toastr.error(LANG['keyview']['rename']['error'],LANG_T['error']);
+                } else {
+                  toastr.error(LANG['keyview']['rename']['error'], LANG_T['error']);
                 }
               });
             });
@@ -578,20 +665,55 @@ class Plugin {
     layout.setHeight('300');
 
     const toolbar = layout.attachToolbar();
-    toolbar.loadStruct([
-      { id: 'view_type_label', type: 'text', text: 'View as:' },
-      { id: 'view_type', type: 'buttonSelect', mode: 'select', selected: "plaintext", width: 100,
-        options: [
-          { id: 'plaintext', type: 'button', icon: 'file-text-o', text: 'Plain Text'},
-          { id: 'json', type: 'button', icon: 'file-code-o', text: 'JSON'},
-          { id: 'hex', type: 'button', icon: 'file-excel-o', text: 'Hex'},
+    toolbar.loadStruct([{
+        id: 'view_type_label',
+        type: 'text',
+        text: 'View as:'
+      },
+      {
+        id: 'view_type',
+        type: 'buttonSelect',
+        mode: 'select',
+        selected: "plaintext",
+        width: 100,
+        options: [{
+            id: 'plaintext',
+            type: 'button',
+            icon: 'file-text-o',
+            text: 'Plain Text'
+          },
+          {
+            id: 'json',
+            type: 'button',
+            icon: 'file-code-o',
+            text: 'JSON'
+          },
+          {
+            id: 'hex',
+            type: 'button',
+            icon: 'file-excel-o',
+            text: 'Hex'
+          },
           // { id: 'hextable', type: 'button', icon: 'file-excel-o', text: 'Hex Table'},
         ]
       },
-      { type: 'separator' },
-      {id: 'save', type: 'button', icon: 'save', text: 'Save' },
-      { type: 'separator' },
-      { id: 'data_size', type: 'text', text: "Size:0b" },
+      {
+        type: 'separator'
+      },
+      {
+        id: 'save',
+        type: 'button',
+        icon: 'save',
+        text: 'Save'
+      },
+      {
+        type: 'separator'
+      },
+      {
+        id: 'data_size',
+        type: 'text',
+        text: "Size:0b"
+      },
     ]);
     let editor;
     editor = ace.edit(layout.cell.lastChild);
@@ -599,16 +721,16 @@ class Plugin {
     editor.setTheme('ace/theme/tomorrow');
     editor.session.setMode('ace/mode/text');
     editor.session.setUseWrapMode(true);
-    editor.session.setWrapLimitRange(null,null);
+    editor.session.setWrapLimitRange(null, null);
     editor.setOptions({
       fontSize: '14px',
       enableBasicAutocompletion: true,
       enableSnippets: true,
       enableLiveAutocompletion: true
     });
-    
-    toolbar.attachEvent('onClick', (id)=>{
-      switch(id) {
+
+    toolbar.attachEvent('onClick', (id) => {
+      switch (id) {
         case 'plaintext':
           editor.setReadOnly(false);
           editor.session.setMode('ace/mode/text');
@@ -619,16 +741,16 @@ class Plugin {
           break;
         case 'hex':
           var keytype = that.keyview.toolbar.getItemText('data_type').toLowerCase();
-          var bindata='';
+          var bindata = '';
           // string 类型的从全局取，list,set,zset,hash 从 grid 中获取
-          switch (keytype){
+          switch (keytype) {
             case 'string':
-              bindata = new Buffer(that.KeyBinaryData);
+              bindata = Buffer.from(that.KeyBinaryData);
               break;
             default:
-              var gid= that.keyview.grid.getSelectedId();
+              var gid = that.keyview.grid.getSelectedId();
               var b64val = that.keyview.grid.getRowAttribute(gid, 'b64val');
-              bindata = new Buffer(b64val, 'base64');
+              bindata = Buffer.from(b64val, 'base64');
               break;
           }
           editor.session.setValue(that.binstrHexable(bindata));
@@ -644,12 +766,12 @@ class Plugin {
           // 获取配置
           const treeid = selecttree.split(":")[0];
           const conf = that.pluginconf[treeid];
-          const db = new Buffer(selecttree.split(":")[1], 'base64').toString();
-          const oldkey = new Buffer(selecttree.split(":")[2], 'base64').toString();
+          const db = Buffer.from(selecttree.split(":")[1], 'base64').toString();
+          const oldkey = Buffer.from(selecttree.split(":")[2], 'base64').toString();
           that.plugincore.setHost(conf['host']);
           var keytype = that.keyview.toolbar.getItemText('data_type').toLowerCase();
           var newvalue = editor.session.getValue();
-          switch(keytype){
+          switch (keytype) {
             case 'string':
               var needpass = false;
               var cmd = "";
@@ -660,49 +782,49 @@ class Plugin {
               cmd += that.redisutil.makeCommand('SELECT', db);
               cmd += that.redisutil.makeCommand('SET', oldkey, newvalue);
               that.core.request({
-                _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
-              }).then((res)=>{
+                _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
+              }).then((res) => {
                 let ret = res['text'];
-                that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
+                that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
                   var retval;
-                  if(needpass){
-                    if(errarr.length != 3 || valarr.length != 3){
-                      toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                  if (needpass) {
+                    if (errarr.length != 3 || valarr.length != 3) {
+                      toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
                       that.redisutil.parser = that.redisutil.initParser();
                       return
                     }
-                    if(errarr[0] != "") {
+                    if (errarr[0] != "") {
                       toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
                       return
                     }
-                    if(errarr[2] != "") {
+                    if (errarr[2] != "") {
                       toastr.error(errarr[2].toString(), LANG_T['error']);
                       return
                     }
                     retval = valarr[2];
-                  }else{
-                    if(errarr.length != 2 || valarr.length != 2){
-                      toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                  } else {
+                    if (errarr.length != 2 || valarr.length != 2) {
+                      toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
                       that.redisutil.parser = that.redisutil.initParser();
                       return
                     }
-                    if(errarr[1] != "") {
+                    if (errarr[1] != "") {
                       toastr.error(errarr[1].toString(), LANG_T['error']);
                       return
                     }
                     retval = valarr[1];
                   }
-                  if(retval.toString() == "OK") {
+                  if (retval.toString() == "OK") {
                     toastr.success(LANG['detail']['save']['success'], LANG_T['success']);
-                  }else{
+                  } else {
                     toastr.error(LANG['detail']['save']['error'], LANG_T['error']);
                   }
                 });
               });
               break;
             case 'list':
-              var gid= that.keyview.grid.getSelectedId();
-              var oldidx = parseInt(gid)-1;
+              var gid = that.keyview.grid.getSelectedId();
+              var oldidx = parseInt(gid) - 1;
               var needpass = false;
               var cmd = "";
               if (conf['passwd'].length > 0) {
@@ -712,48 +834,48 @@ class Plugin {
               cmd += that.redisutil.makeCommand('SELECT', db);
               cmd += that.redisutil.makeCommand('LSET', oldkey, `${oldidx}`, newvalue);
               that.core.request({
-                _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
-              }).then((res)=>{
+                _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
+              }).then((res) => {
                 let ret = res['text'];
-                that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
+                that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
                   var retval;
-                  if(needpass){
-                    if(errarr.length != 3 || valarr.length != 3){
-                      toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                  if (needpass) {
+                    if (errarr.length != 3 || valarr.length != 3) {
+                      toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
                       that.redisutil.parser = that.redisutil.initParser();
                       return
                     }
-                    if(errarr[0] != "") {
+                    if (errarr[0] != "") {
                       toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
                       return
                     }
-                    if(errarr[2] != "") {
+                    if (errarr[2] != "") {
                       toastr.error(errarr[2].toString(), LANG_T['error']);
                       return
                     }
                     retval = valarr[2];
-                  }else{
-                    if(errarr.length != 2 || valarr.length != 2){
-                      toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                  } else {
+                    if (errarr.length != 2 || valarr.length != 2) {
+                      toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
                       that.redisutil.parser = that.redisutil.initParser();
                       return
                     }
-                    if(errarr[1] != "") {
+                    if (errarr[1] != "") {
                       toastr.error(errarr[1].toString(), LANG_T['error']);
                       return
                     }
                     retval = valarr[1];
                   }
-                  if(retval.toString() == "OK") {
+                  if (retval.toString() == "OK") {
                     toastr.success(LANG['detail']['save']['success'], LANG_T['success']);
-                  }else{
+                  } else {
                     toastr.error(LANG['detail']['save']['error'], LANG_T['error']);
                   }
                 });
               });
               break;
             case 'set':
-              var gid= that.keyview.grid.getSelectedId();
+              var gid = that.keyview.grid.getSelectedId();
               var b64val = that.keyview.grid.getRowAttribute(gid, 'b64val');
               var needpass = false;
               var cmd = "";
@@ -762,59 +884,59 @@ class Plugin {
                 needpass = true;
               }
               cmd += that.redisutil.makeCommand('SELECT', db);
-              cmd += that.redisutil.makeCommand('SREM', oldkey, new Buffer(b64val, 'base64').toString());
+              cmd += that.redisutil.makeCommand('SREM', oldkey, Buffer.from(b64val, 'base64').toString());
               cmd += that.redisutil.makeCommand('SADD', oldkey, newvalue);
               that.core.request({
-                _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
-              }).then((res)=>{
+                _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
+              }).then((res) => {
                 let ret = res['text'];
-                that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
+                that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
                   var retval;
-                  if(needpass){
-                    if(errarr.length != 4 || valarr.length != 4){
-                      toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                  if (needpass) {
+                    if (errarr.length != 4 || valarr.length != 4) {
+                      toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
                       that.redisutil.parser = that.redisutil.initParser();
                       return
                     }
-                    if(errarr[0] != "") {
+                    if (errarr[0] != "") {
                       toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
                       return
                     }
-                    if(errarr[2] != "") {
+                    if (errarr[2] != "") {
                       toastr.error(errarr[2].toString(), LANG_T['error']);
                       return
                     }
-                    if(errarr[3].length > 0) {
+                    if (errarr[3].length > 0) {
                       toastr.error(errarr[3].toString(), LANG_T['error']);
                       return
                     }
                     retval = valarr[3];
-                  }else{
-                    if(errarr.length != 3 || valarr.length != 3){
-                      toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                  } else {
+                    if (errarr.length != 3 || valarr.length != 3) {
+                      toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
                       that.redisutil.parser = that.redisutil.initParser();
                       return
                     }
-                    if(errarr[1] != "") {
+                    if (errarr[1] != "") {
                       toastr.error(errarr[1].toString(), LANG_T['error']);
                       return
                     }
-                    if(errarr[2] != "") {
+                    if (errarr[2] != "") {
                       toastr.error(errarr[2].toString(), LANG_T['error']);
                       return
                     }
                     retval = valarr[2];
                   }
-                  if(parseInt(retval.toString()) > 0) {
+                  if (parseInt(retval.toString()) > 0) {
                     toastr.success(LANG['detail']['save']['success'], LANG_T['success']);
-                  }else{
+                  } else {
                     toastr.error(LANG['detail']['save']['error'], LANG_T['error']);
                   }
                 });
               });
               break;
             case 'zset':
-              var gid= that.keyview.grid.getSelectedId();
+              var gid = that.keyview.grid.getSelectedId();
               var b64val = that.keyview.grid.getRowAttribute(gid, 'b64val'); // value
               var b64val2 = that.keyview.grid.getRowAttribute(gid, 'b64val2'); //score
               var needpass = false;
@@ -824,59 +946,59 @@ class Plugin {
                 needpass = true;
               }
               cmd += that.redisutil.makeCommand('SELECT', db);
-              cmd += that.redisutil.makeCommand('ZREM', oldkey, new Buffer(b64val, 'base64').toString());
-              cmd += that.redisutil.makeCommand('ZADD', oldkey, new Buffer(b64val2, 'base64').toString(), newvalue);
+              cmd += that.redisutil.makeCommand('ZREM', oldkey, Buffer.from(b64val, 'base64').toString());
+              cmd += that.redisutil.makeCommand('ZADD', oldkey, Buffer.from(b64val2, 'base64').toString(), newvalue);
               that.core.request({
-                _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
-              }).then((res)=>{
+                _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
+              }).then((res) => {
                 let ret = res['text'];
-                that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
+                that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
                   var retval;
-                  if(needpass){
-                    if(errarr.length != 4 || valarr.length != 4){
-                      toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                  if (needpass) {
+                    if (errarr.length != 4 || valarr.length != 4) {
+                      toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
                       that.redisutil.parser = that.redisutil.initParser();
                       return
                     }
-                    if(errarr[0] != "") {
+                    if (errarr[0] != "") {
                       toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
                       return
                     }
-                    if(errarr[2] != "") {
+                    if (errarr[2] != "") {
                       toastr.error(errarr[2].toString(), LANG_T['error']);
                       return
                     }
-                    if(errarr[3].length > 0) {
+                    if (errarr[3].length > 0) {
                       toastr.error(errarr[3].toString(), LANG_T['error']);
                       return
                     }
                     retval = valarr[3];
-                  }else{
-                    if(errarr.length != 3 || valarr.length != 3){
-                      toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                  } else {
+                    if (errarr.length != 3 || valarr.length != 3) {
+                      toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
                       that.redisutil.parser = that.redisutil.initParser();
                       return
                     }
-                    if(errarr[1] != "") {
+                    if (errarr[1] != "") {
                       toastr.error(errarr[1].toString(), LANG_T['error']);
                       return
                     }
-                    if(errarr[2] != "") {
+                    if (errarr[2] != "") {
                       toastr.error(errarr[2].toString(), LANG_T['error']);
                       return
                     }
                     retval = valarr[2];
                   }
-                  if(parseInt(retval.toString()) > 0) {
+                  if (parseInt(retval.toString()) > 0) {
                     toastr.success(LANG['detail']['save']['success'], LANG_T['success']);
-                  }else{
+                  } else {
                     toastr.error(LANG['detail']['save']['error'], LANG_T['error']);
                   }
                 });
               });
               break;
             case 'hash':
-              var gid= that.keyview.grid.getSelectedId();
+              var gid = that.keyview.grid.getSelectedId();
               var b64val = that.keyview.grid.getRowAttribute(gid, 'b64val'); // key
               var b64val2 = that.keyview.grid.getRowAttribute(gid, 'b64val2'); //value
               var needpass = false;
@@ -886,52 +1008,52 @@ class Plugin {
                 needpass = true;
               }
               cmd += that.redisutil.makeCommand('SELECT', db);
-              cmd += that.redisutil.makeCommand('HDEL', oldkey, new Buffer(b64val, 'base64').toString());
-              cmd += that.redisutil.makeCommand('HSET', oldkey, newvalue, new Buffer(b64val2, 'base64').toString());
+              cmd += that.redisutil.makeCommand('HDEL', oldkey, Buffer.from(b64val, 'base64').toString());
+              cmd += that.redisutil.makeCommand('HSET', oldkey, newvalue, Buffer.from(b64val2, 'base64').toString());
               that.core.request({
-                _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
-              }).then((res)=>{
+                _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
+              }).then((res) => {
                 let ret = res['text'];
-                that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
+                that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
                   var retval;
-                  if(needpass){
-                    if(errarr.length != 4 || valarr.length != 4){
-                      toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                  if (needpass) {
+                    if (errarr.length != 4 || valarr.length != 4) {
+                      toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
                       that.redisutil.parser = that.redisutil.initParser();
                       return
                     }
-                    if(errarr[0] != "") {
+                    if (errarr[0] != "") {
                       toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
                       return
                     }
-                    if(errarr[2] != "") {
+                    if (errarr[2] != "") {
                       toastr.error(errarr[2].toString(), LANG_T['error']);
                       return
                     }
-                    if(errarr[3].length > 0) {
+                    if (errarr[3].length > 0) {
                       toastr.error(errarr[3].toString(), LANG_T['error']);
                       return
                     }
                     retval = valarr[3];
-                  }else{
-                    if(errarr.length != 3 || valarr.length != 3){
-                      toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+                  } else {
+                    if (errarr.length != 3 || valarr.length != 3) {
+                      toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
                       that.redisutil.parser = that.redisutil.initParser();
                       return
                     }
-                    if(errarr[1] != "") {
+                    if (errarr[1] != "") {
                       toastr.error(errarr[1].toString(), LANG_T['error']);
                       return
                     }
-                    if(errarr[2] != "") {
+                    if (errarr[2] != "") {
                       toastr.error(errarr[2].toString(), LANG_T['error']);
                       return
                     }
                     retval = valarr[2];
                   }
-                  if(parseInt(retval.toString()) > 0) {
+                  if (parseInt(retval.toString()) > 0) {
                     toastr.success(LANG['detail']['save']['success'], LANG_T['success']);
-                  }else{
+                  } else {
                     toastr.error(LANG['detail']['save']['error'], LANG_T['error']);
                   }
                 });
@@ -951,17 +1073,17 @@ class Plugin {
   }
 
   binstrHexable(binstr) {
-    let buffer = new Buffer(binstr).toString();
+    let buffer = Buffer.from(binstr).toString();
     let ret = '';
     for (let i = 0; i < buffer.length; i++) {
-      if(this.isPrint(buffer[i])){
+      if (this.isPrint(buffer[i])) {
         ret += buffer[i];
-      }else{
+      } else {
         var hex = buffer[i].charCodeAt().toString(16);
         // 这个实现的 padding 方法有点 low 暂时先这么用
-        var padding = hex.length <=4 ? 4-hex.length: 0;
+        var padding = hex.length <= 4 ? 4 - hex.length : 0;
         var paddingstr = '';
-        for(let j=0; j<padding;j++){
+        for (let j = 0; j < padding; j++) {
           paddingstr += '0';
         }
         ret += `\\u${paddingstr}${hex}`;
@@ -972,7 +1094,7 @@ class Plugin {
 
   isPrint(aChar) {
     var myCharCode = aChar.charCodeAt(0);
-    if((myCharCode > 31) && (myCharCode <  127)) {
+    if ((myCharCode > 31) && (myCharCode < 127)) {
       return true;
     }
     return false;
@@ -1010,10 +1132,12 @@ class Plugin {
   // value 大小计算
   keySize(t) {
     let i = false;
-    let b = ["b","Kb","Mb","Gb","Tb","Pb","Eb"];
-    for (let q=0; q<b.length; q++) if (t > 1024) t = t / 1024; else if (i === false) i = q;
-    if (i === false) i = b.length-1;
-    return Math.round(t*100)/100+" "+b[i];
+    let b = ["b", "Kb", "Mb", "Gb", "Tb", "Pb", "Eb"];
+    for (let q = 0; q < b.length; q++)
+      if (t > 1024) t = t / 1024;
+      else if (i === false) i = q;
+    if (i === false) i = b.length - 1;
+    return Math.round(t * 100) / 100 + " " + b[i];
   }
 
   addConf() {
@@ -1024,27 +1148,57 @@ class Plugin {
     win.button('minmax').hide();
     win.setModal(true);
     win.denyResize();
-    
+
     // 工具栏
     const toolbar = win.attachToolbar();
-    toolbar.loadStruct([
-      {id: 'add', type: 'button', icon: 'plus-circle', text: LANG['add']['toolbar']['add'] },
-      { type: 'separator' },
-      {id: 'clear', type: 'button', icon: 'remove', text: LANG['add']['toolbar']['clear'] },
+    toolbar.loadStruct([{
+        id: 'add',
+        type: 'button',
+        icon: 'plus-circle',
+        text: LANG['add']['toolbar']['add']
+      },
+      {
+        type: 'separator'
+      },
+      {
+        id: 'clear',
+        type: 'button',
+        icon: 'remove',
+        text: LANG['add']['toolbar']['clear']
+      },
     ]);
-    
+
     // 表单
-    const form = win.attachForm([
-      { type: 'settings', position: 'label-left', labelWidth: 90, inputWidth: 250 },
-      { type: 'block', inputWidth: 'auto', offsetTop: 12, list:[
-        { type: 'input', label: LANG['add']['form']['host'], name: 'host', required: true, value: '127.0.0.1:6379' },
-        { type: 'input', label: LANG['add']['form']['passwd'], name: 'passwd', value: '' }
-      ]},
+    const form = win.attachForm([{
+        type: 'settings',
+        position: 'label-left',
+        labelWidth: 90,
+        inputWidth: 250
+      },
+      {
+        type: 'block',
+        inputWidth: 'auto',
+        offsetTop: 12,
+        list: [{
+            type: 'input',
+            label: LANG['add']['form']['host'],
+            name: 'host',
+            required: true,
+            value: '127.0.0.1:6379'
+          },
+          {
+            type: 'input',
+            label: LANG['add']['form']['passwd'],
+            name: 'passwd',
+            value: ''
+          }
+        ]
+      },
     ]);
-    
+
     // 工具栏点击事件
     toolbar.attachEvent('onClick', (id) => {
-      switch(id) {
+      switch (id) {
         case 'clear':
           form.clear();
           break;
@@ -1054,7 +1208,7 @@ class Plugin {
           };
           // 解析数据
           let data = form.getValues();
-          
+
           const id = antSword['ipcRenderer'].sendSync('shell-addPluginDataConf', this.dbname, {
             _id: this.opt['_id'],
             data: data
@@ -1077,7 +1231,7 @@ class Plugin {
   }
 
   // 编辑配置
-  editConf(){
+  editConf() {
     let that = this;
     const id = that.tree.getSelected().split('::')[1];
     // 获取配置
@@ -1106,17 +1260,36 @@ class Plugin {
       text: LANG['edit']['toolbar']['clear']
     }]);
     // form
-    const form = win.attachForm([
-      { type: 'settings', position: 'label-left', labelWidth: 90, inputWidth: 250 },
-      { type: 'block', inputWidth: 'auto', offsetTop: 12, list:[
-        { type: 'input', label: LANG['add']['form']['host'], name: 'host', required: true, value: conf['host'] },
-        { type: 'input', label: LANG['add']['form']['passwd'], name: 'passwd', value: conf['passwd'] }
-      ]},
+    const form = win.attachForm([{
+        type: 'settings',
+        position: 'label-left',
+        labelWidth: 90,
+        inputWidth: 250
+      },
+      {
+        type: 'block',
+        inputWidth: 'auto',
+        offsetTop: 12,
+        list: [{
+            type: 'input',
+            label: LANG['add']['form']['host'],
+            name: 'host',
+            required: true,
+            value: conf['host']
+          },
+          {
+            type: 'input',
+            label: LANG['add']['form']['passwd'],
+            name: 'passwd',
+            value: conf['passwd']
+          }
+        ]
+      },
     ], true);
 
     // 工具栏点击事件
     toolbar.attachEvent('onClick', (id) => {
-      switch(id) {
+      switch (id) {
         case 'clear':
           form.clear();
           break;
@@ -1145,7 +1318,8 @@ class Plugin {
   delConf() {
     const id = this.tree.getSelected().split('::')[1];
     layer.confirm(LANG['del']['form']['confirm'], {
-      icon: 2, shift: 6,
+      icon: 2,
+      shift: 6,
       title: LANG['del']['form']['title']
     }, (_) => {
       layer.close(_);
@@ -1159,7 +1333,7 @@ class Plugin {
         // 禁用按钮
         this.disableToolbar();
         // this.parse();
-      }else{
+      } else {
         toastr.error(LANG['error']['delconf'](ret), LANG_T['error']);
       }
     });
@@ -1180,89 +1354,91 @@ class Plugin {
     }
     cmd += that.redisutil.makeCommand('INFO', 'Keyspace');
     that.core.request({
-      _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
-    }).then((res)=>{
-      that.list.layout.progressOff();
-      let ret = res['text'];
-      that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
-        let value = "";
-        if(needpass) {
-          if(errarr.length != 2 || valarr.length != 2){
-            toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
-            that.redisutil.parser = that.redisutil.initParser();
-            that.list.layout.progressOff();
-            return
-          }
-          if(errarr[0] != "") {
-            toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
-            return
-          }
-          if(errarr[1] != "" ) {
-            toastr.error(LANG['error']['database'](errarr[1].toString()), LANG_T['error']);
-            return
-          }
-          value = valarr[1].toString();
-        }else{
-          if(errarr.length != 1 || valarr.length != 1){
-            toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
-            that.redisutil.parser = that.redisutil.initParser();
-            return
-          }
-          if(errarr[0] != "") {
-            toastr.error(LANG['error']['database'](errarr[0].toString()), LANG_T['error']);
-            return
-          }
-          value = valarr[0].toString();
-        }
-
-        let redisdbs = [];
-        for (let i=0; i<16; i++) {
-          redisdbs.push({
-            db: `${i}`,
-            all_keys: 0,
-            expires_keys: 0,
-            avg_ttl: 0,
-          });
-        }
-        value.split("\r\n").forEach((v)=>{
-          if(v.startsWith("#") || v == "") {
-            return
-          }
-          if (/db(\d+?):keys=(\d+?),expires=(\d+?),/.test(v)){
-            let dbnum = parseInt(RegExp.$1);
-            let keys = parseInt(RegExp.$2);
-            let expires = parseInt(RegExp.$3);
-            redisdbs[dbnum] = {
-              db: `${dbnum}`,
-              all_keys: keys,
-              expires_keys: expires,
-              avg_ttl: 0,
+        _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
+      }).then((res) => {
+        that.list.layout.progressOff();
+        let ret = res['text'];
+        that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
+          let value = "";
+          if (needpass) {
+            if (errarr.length != 2 || valarr.length != 2) {
+              toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
+              that.redisutil.parser = that.redisutil.initParser();
+              that.list.layout.progressOff();
+              return
             }
+            if (errarr[0] != "") {
+              toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
+              return
+            }
+            if (errarr[1] != "") {
+              toastr.error(LANG['error']['database'](errarr[1].toString()), LANG_T['error']);
+              return
+            }
+            value = valarr[1].toString();
+          } else {
+            if (errarr.length != 1 || valarr.length != 1) {
+              toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
+              that.redisutil.parser = that.redisutil.initParser();
+              return
+            }
+            if (errarr[0] != "") {
+              toastr.error(LANG['error']['database'](errarr[0].toString()), LANG_T['error']);
+              return
+            }
+            value = valarr[0].toString();
           }
-        });
 
-        redisdbs.forEach((_)=>{
-          if (!_) {return};
-          const _db = new Buffer(_.db).toString('base64');
-          let db_text = _.all_keys > 0 ? `db${_.db}(${_.all_keys - _.expires_keys}/${_.all_keys})`: `db${_.db}(${_.all_keys})`;
-          that.tree.insertNewItem(
-            `conn::${id}`,
-            `database::${id}:${_db}`,
-            db_text, null,
-            that.list.imgs[1],
-            that.list.imgs[1],
-            that.list.imgs[1]
-          );
+          let redisdbs = [];
+          for (let i = 0; i < 16; i++) {
+            redisdbs.push({
+              db: `${i}`,
+              all_keys: 0,
+              expires_keys: 0,
+              avg_ttl: 0,
+            });
+          }
+          value.split("\r\n").forEach((v) => {
+            if (v.startsWith("#") || v == "") {
+              return
+            }
+            if (/db(\d+?):keys=(\d+?),expires=(\d+?),/.test(v)) {
+              let dbnum = parseInt(RegExp.$1);
+              let keys = parseInt(RegExp.$2);
+              let expires = parseInt(RegExp.$3);
+              redisdbs[dbnum] = {
+                db: `${dbnum}`,
+                all_keys: keys,
+                expires_keys: expires,
+                avg_ttl: 0,
+              }
+            }
+          });
+
+          redisdbs.forEach((_) => {
+            if (!_) {
+              return
+            };
+            const _db = Buffer.from(_.db).toString('base64');
+            let db_text = _.all_keys > 0 ? `db${_.db}(${_.all_keys - _.expires_keys}/${_.all_keys})` : `db${_.db}(${_.all_keys})`;
+            that.tree.insertNewItem(
+              `conn::${id}`,
+              `database::${id}:${_db}`,
+              db_text, null,
+              that.list.imgs[1],
+              that.list.imgs[1],
+              that.list.imgs[1]
+            );
+          });
+          // that.list.layout.progressOff();
         });
-        // that.list.layout.progressOff();
+      })
+      .catch((err) => {
+        console.log(err);
+        that.redisutil.parser = that.redisutil.initParser();
+        toastr.error(LANG['error']['database'](err['status'] || JSON.stringify(err)), LANG_T['error']);
+        that.list.layout.progressOff();
       });
-    })
-    .catch((err)=>{
-      console.log(err);
-      that.redisutil.parser = that.redisutil.initParser();
-      toastr.error(LANG['error']['database'](err['status'] || JSON.stringify(err)), LANG_T['error']);
-      that.list.layout.progressOff();
-    });
   }
   // 获取当前 db 下的 Key
   getRedisKeys(id, db) {
@@ -1279,82 +1455,84 @@ class Plugin {
     cmd += that.redisutil.makeCommand('SELECT', `${db}`);
     cmd += that.redisutil.makeCommand('SCAN', '0', 'MATCH', '*', 'COUNT', '10000');
     that.core.request({
-      _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
-    }).then((res)=>{
-      that.list.layout.progressOff();
-      let ret = res['text'];
-      that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
-        let value = "";
-        if(needpass) {
-          if(errarr.length != 3 || valarr.length != 3){
-            toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
-            that.redisutil.parser = that.redisutil.initParser();
-            return
+        _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
+      }).then((res) => {
+        that.list.layout.progressOff();
+        let ret = res['text'];
+        that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
+          let value = "";
+          if (needpass) {
+            if (errarr.length != 3 || valarr.length != 3) {
+              toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
+              that.redisutil.parser = that.redisutil.initParser();
+              return
+            }
+            if (errarr[0] != "") {
+              toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
+              return
+            }
+            if (errarr[1] != "") {
+              toastr.error(LANG['error']['nodatabase'](errarr[1].toString()), LANG_T['error']);
+              return
+            }
+            if (errarr[2] != "") {
+              toastr.error(errarr[2].toString(), LANG_T['error']);
+              return
+            }
+            if (valarr[2].length === 2) {
+              value = valarr[2][1];
+            } else {
+              value = valarr[2];
+            }
+          } else {
+            if (errarr.length != 2 || valarr.length != 2) {
+              toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
+              that.redisutil.parser = that.redisutil.initParser();
+              return
+            }
+            if (errarr[0] != "") {
+              toastr.error(LANG['error']['nodatabase'](errarr[0].toString()), LANG_T['error']);
+              return
+            }
+            if (errarr[1] != "") {
+              toastr.error(errarr[1], LANG_T['error']);
+              return
+            }
+            if (valarr[1].length === 2) {
+              value = valarr[1][1];
+            } else {
+              value = valarr[1];
+            }
           }
-          if(errarr[0] != "") {
-            toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
-            return
-          }
-          if(errarr[1] != "") {
-            toastr.error(LANG['error']['nodatabase'](errarr[1].toString()), LANG_T['error']);
-            return
-          }
-          if(errarr[2] != "") {
-            toastr.error(errarr[2].toString(), LANG_T['error']);
-            return
-          }
-          if (valarr[2].length === 2){
-            value = valarr[2][1];
-          }else{
-            value = valarr[2];
-          }
-        }else{
-          if(errarr.length != 2 || valarr.length != 2){
-            toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
-            that.redisutil.parser = that.redisutil.initParser();
-            return
-          }
-          if(errarr[0] != "") {
-            toastr.error(LANG['error']['nodatabase'](errarr[0].toString()), LANG_T['error']);
-            return
-          }
-          if(errarr[1] != "") {
-            toastr.error(errarr[1], LANG_T['error']);
-            return
-          }
-          if (valarr[1].length === 2){
-            value = valarr[1][1];
-          }else{
-            value = valarr[1];
-          }
-        }
-        
-        const _db = new Buffer(db).toString('base64');
-        // 删除子节点
-        this.tree.deleteChildItems(`database::${id}:${_db}`);
-        // 添加子节点
-        value.map((_) => {
-          if (!_) { return };
-          const _rediskey = new Buffer(_).toString('base64');
-          this.tree.insertNewItem(
-            `database::${id}:${_db}`,
-            `rediskeys::${id}:${_db}:${_rediskey}`,
-            _,
-            null,
-            this.list.imgs[2],
-            this.list.imgs[2],
-            this.list.imgs[2]
-          );
+
+          const _db = Buffer.from(db).toString('base64');
+          // 删除子节点
+          this.tree.deleteChildItems(`database::${id}:${_db}`);
+          // 添加子节点
+          value.map((_) => {
+            if (!_) {
+              return
+            };
+            const _rediskey = Buffer.from(_).toString('base64');
+            this.tree.insertNewItem(
+              `database::${id}:${_db}`,
+              `rediskeys::${id}:${_db}:${_rediskey}`,
+              antSword.noxss(_),
+              null,
+              this.list.imgs[2],
+              this.list.imgs[2],
+              this.list.imgs[2]
+            );
+          });
+          // that.list.layout.progressOff();
         });
-        // that.list.layout.progressOff();
+      })
+      .catch((err) => {
+        // 重新初始化 parser
+        that.redisutil.parser = that.redisutil.initParser();
+        toastr.error(LANG['error']['getkeys'](err['status'] || JSON.stringify(err)), LANG_T['error']);
+        that.list.layout.progressOff();
       });
-    })
-    .catch((err)=>{
-      // 重新初始化 parser
-      that.redisutil.parser = that.redisutil.initParser();
-      toastr.error(LANG['error']['getkeys'](err['status'] || JSON.stringify(err)), LANG_T['error']);
-      that.list.layout.progressOff();
-    });
   }
 
   // 获取 Key 的详细信息
@@ -1375,382 +1553,390 @@ class Plugin {
     cmd += that.redisutil.makeCommand('TYPE', `${rdkey}`);
     cmd += that.redisutil.makeCommand('TTL', `${rdkey}`);
     that.core.request({
-      _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
-    }).then((res)=>{
-      let ret = res['text'];
-      that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
-        let typevalue = "";
-        let ttlvalue = "";
-        if(needpass) {
-          if(errarr.length != 4 || valarr.length != 4){
-            toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
-            that.redisutil.parser = that.redisutil.initParser();
-            return
+        _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
+      }).then((res) => {
+        let ret = res['text'];
+        that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
+          let typevalue = "";
+          let ttlvalue = "";
+          if (needpass) {
+            if (errarr.length != 4 || valarr.length != 4) {
+              toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
+              that.redisutil.parser = that.redisutil.initParser();
+              return
+            }
+            if (errarr[0] != "") {
+              toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
+              return
+            }
+            if (errarr[1] != "") {
+              toastr.error(LANG['error']['nodatabase'](errarr[1].toString()), LANG_T['error']);
+              return
+            }
+            // type
+            if (errarr[2] != "") {
+              toastr.error(errarr[2].toString(), LANG_T['error']);
+              return
+            }
+            // ttl
+            if (errarr[3].length > 0) {
+              toastr.error(errarr[3].toString(), LANG_T['error']);
+              return
+            }
+            typevalue = valarr[2].toString();
+            ttlvalue = valarr[3].toString();
+          } else {
+            if (errarr.length != 3 || valarr.length != 3) {
+              toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
+              that.redisutil.parser = that.redisutil.initParser();
+              return
+            }
+            if (errarr[0] != "") {
+              toastr.error(LANG['error']['nodatabase'](errarr[0].toString()), LANG_T['error']);
+              return
+            }
+            // type
+            if (errarr[1] != "") {
+              toastr.error(errarr[1].toString(), LANG_T['error']);
+              return
+            }
+            // ttl
+            if (errarr[2] != "") {
+              toastr.error(errarr[2].toString(), LANG_T['error']);
+              return
+            }
+            typevalue = valarr[1].toString();
+            ttlvalue = valarr[2].toString();
           }
-          if(errarr[0] != "") {
-            toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
-            return
-          }
-          if(errarr[1] != "") {
-            toastr.error(LANG['error']['nodatabase'](errarr[1].toString()), LANG_T['error']);
-            return
-          }
-          // type
-          if(errarr[2] != "") {
-            toastr.error(errarr[2].toString(), LANG_T['error']);
-            return
-          }
-          // ttl
-          if(errarr[3].length > 0) {
-            toastr.error(errarr[3].toString(), LANG_T['error']);
-            return
-          }
-          typevalue = valarr[2].toString();
-          ttlvalue = valarr[3].toString();
-        }else{
-          if(errarr.length != 3 || valarr.length != 3){
-            toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
-            that.redisutil.parser = that.redisutil.initParser();
-            return
-          }
-          if(errarr[0] != "") {
-            toastr.error(LANG['error']['nodatabase'](errarr[0].toString()), LANG_T['error']);
-            return
-          }
-          // type
-          if(errarr[1] != "") {
-            toastr.error(errarr[1].toString(), LANG_T['error']);
-            return
-          }
-          // ttl
-          if(errarr[2] != "") {
-            toastr.error(errarr[2].toString(), LANG_T['error']);
-            return
-          }
-          typevalue = valarr[1].toString();
-          ttlvalue = valarr[2].toString();
-        }
 
-        // 更新界面 value 和 ttl
-        that.keyview.toolbar.setValue('data_key', rdkey);
-        that.keyview.toolbar.setItemText('data_ttl', `${ttlvalue}`);
-        // 根据类型选择
-        switch (typevalue) {
-          case 'string':
-            that.keyview.toolbar.setItemText('data_type', 'STRING');
-            cmd = "" ;
-            if (needpass){
-              cmd = that.redisutil.makeCommand('AUTH', conf['passwd']);
-            }
-            cmd += that.redisutil.makeCommand('SELECT', `${db}`);
-            cmd += that.redisutil.makeCommand('GET', `${rdkey}`);
-            that.core.request({
-              _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
-            }).then((res2)=>{
-              let ret2 = res2['text'];
-              that.redisutil.parseResponse(that.plugincore.decode(ret2),(valarr2, errarr2)=>{
-                let strvalue = "";
-                if(needpass) {
-                  if(errarr2.length != 3 || valarr2.length != 3){
-                    toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
-                    that.redisutil.parser = that.redisutil.initParser();
-                    return
+          // 更新界面 value 和 ttl
+          that.keyview.toolbar.setValue('data_key', rdkey);
+          that.keyview.toolbar.setItemText('data_ttl', `${ttlvalue}`);
+          // 根据类型选择
+          switch (typevalue) {
+            case 'string':
+              that.keyview.toolbar.setItemText('data_type', 'STRING');
+              cmd = "";
+              if (needpass) {
+                cmd = that.redisutil.makeCommand('AUTH', conf['passwd']);
+              }
+              cmd += that.redisutil.makeCommand('SELECT', `${db}`);
+              cmd += that.redisutil.makeCommand('GET', `${rdkey}`);
+              that.core.request({
+                _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
+              }).then((res2) => {
+                let ret2 = res2['text'];
+                that.redisutil.parseResponse(that.plugincore.decode(ret2), (valarr2, errarr2) => {
+                  let strvalue = "";
+                  if (needpass) {
+                    if (errarr2.length != 3 || valarr2.length != 3) {
+                      toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
+                      that.redisutil.parser = that.redisutil.initParser();
+                      return
+                    }
+                    if (errarr2[0] != "") {
+                      toastr.error(LANG['error']['auth'](errarr2[0].toString()), LANG_T['error']);
+                      return
+                    }
+                    if (errarr2[2] != "") {
+                      toastr.error(errarr2[2].toString(), LANG_T['error']);
+                      return
+                    }
+                    strvalue = valarr2[2].toString();
+                    that.KeyBinaryData = valarr2[2];
+                  } else {
+                    if (errarr2.length != 2 || valarr2.length != 2) {
+                      toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
+                      that.redisutil.parser = that.redisutil.initParser();
+                      return
+                    }
+                    if (errarr2[1] != "") {
+                      toastr.error(errarr2[0].toString(), LANG_T['error']);
+                      return
+                    }
+                    that.KeyBinaryData = valarr2[1];
+                    strvalue = valarr2[1].toString();
                   }
-                  if(errarr2[0] != "") {
-                    toastr.error(LANG['error']['auth'](errarr2[0].toString()), LANG_T['error']);
-                    return
-                  }
-                  if(errarr2[2] != "") {
-                    toastr.error(errarr2[2].toString(), LANG_T['error']);
-                    return
-                  }
-                  strvalue = valarr2[2].toString();
-                  that.KeyBinaryData = valarr2[2];
-                }else{
-                  if(errarr2.length != 2 || valarr2.length != 2){
-                    toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
-                    that.redisutil.parser = that.redisutil.initParser();
-                    return
-                  }
-                  if(errarr2[1] != "") {
-                    toastr.error(errarr2[0].toString(), LANG_T['error']);
-                    return
-                  }
-                  that.KeyBinaryData = valarr2[1];
-                  strvalue = valarr2[1].toString();
-                }
-                this.detail.editor.session.setValue(strvalue);
-                that.detail.toolbar.setItemText('data_size', `Size: ${that.keySize(strvalue.length)}`);
-                that.keyview.toolbar.setItemText('data_size', "");
-                this.enableEditor();
+                  this.detail.editor.session.setValue(strvalue);
+                  that.detail.toolbar.setItemText('data_size', `Size: ${that.keySize(strvalue.length)}`);
+                  that.keyview.toolbar.setItemText('data_size', "");
+                  this.enableEditor();
+                });
               });
-            });
-            break;
-          case 'list':
-            that.keyview.toolbar.setItemText('data_type', 'LIST');
-            cmd = "" ;
-            if (needpass){
-              cmd = that.redisutil.makeCommand('AUTH', conf['passwd']);
-            }
-            cmd += that.redisutil.makeCommand('SELECT', `${db}`);
-            cmd += that.redisutil.makeCommand('LRANGE', `${rdkey}`, '0', '1000');
-            that.core.request({
-              _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
-            }).then((res2)=>{
-              let ret2 = res2['text'];
-              that.redisutil.parseResponse(that.plugincore.decode(ret2),(valarr2, errarr2)=>{
-                let listvalue = "";
-                if(needpass) {
-                  if(errarr2.length != 3 || valarr2.length != 3){
-                    toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
-                    that.redisutil.parser = that.redisutil.initParser();
-                    return
+              break;
+            case 'list':
+              that.keyview.toolbar.setItemText('data_type', 'LIST');
+              cmd = "";
+              if (needpass) {
+                cmd = that.redisutil.makeCommand('AUTH', conf['passwd']);
+              }
+              cmd += that.redisutil.makeCommand('SELECT', `${db}`);
+              cmd += that.redisutil.makeCommand('LRANGE', `${rdkey}`, '0', '1000');
+              that.core.request({
+                _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
+              }).then((res2) => {
+                let ret2 = res2['text'];
+                that.redisutil.parseResponse(that.plugincore.decode(ret2), (valarr2, errarr2) => {
+                  let listvalue = "";
+                  if (needpass) {
+                    if (errarr2.length != 3 || valarr2.length != 3) {
+                      toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
+                      that.redisutil.parser = that.redisutil.initParser();
+                      return
+                    }
+                    if (errarr2[0] != "") {
+                      toastr.error(LANG['error']['auth'](errarr2[0].toString()), LANG_T['error']);
+                      return
+                    }
+                    if (errarr2[2] != "") {
+                      toastr.error(errarr2[2].toString(), LANG_T['error']);
+                      return
+                    }
+                    // array
+                    listvalue = valarr2[2];
+                  } else {
+                    if (errarr2.length != 2 || valarr2.length != 2) {
+                      toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
+                      that.redisutil.parser = that.redisutil.initParser();
+                      return
+                    }
+                    if (errarr2[1] != "") {
+                      toastr.error(errarr2[0].toString(), LANG_T['error']);
+                      return
+                    }
+                    // array
+                    listvalue = valarr2[1];
                   }
-                  if(errarr2[0] != "") {
-                    toastr.error(LANG['error']['auth'](errarr2[0].toString()), LANG_T['error']);
-                    return
+                  that.keyview.grid.detachHeader(0);
+                  that.keyview.grid.attachHeader("No.,Value");
+                  let grid_data = [];
+                  for (let i = 0; i < listvalue.length; i++) {
+                    grid_data.push({
+                      id: i + 1,
+                      idx: i,
+                      b64val: Buffer.from(listvalue[i]).toString('base64'),
+                      data: [i + 1, antSword.noxss(listvalue[i].toString(), false)]
+                    });
                   }
-                  if(errarr2[2] != "") {
-                    toastr.error(errarr2[2].toString(), LANG_T['error']);
-                    return
-                  }
-                  // array
-                  listvalue = valarr2[2];
-                }else{
-                  if(errarr2.length != 2 || valarr2.length != 2){
-                    toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
-                    that.redisutil.parser = that.redisutil.initParser();
-                    return
-                  }
-                  if(errarr2[1] != "") {
-                    toastr.error(errarr2[0].toString(), LANG_T['error']);
-                    return
-                  }
-                  // array
-                  listvalue = valarr2[1];
-                }
-                that.keyview.grid.detachHeader(0);
-                that.keyview.grid.attachHeader("No.,Value");
-                let grid_data = [];
-                for(let i=0; i< listvalue.length; i++) {
-                  grid_data.push({
-                    id: i+1,
-                    idx: i,
-                    b64val: new Buffer(listvalue[i]).toString('base64'),
-                    data: [i+1, listvalue[i].toString()]
-                  });
-                }
-                that.keyview.grid.parse({
-                  'rows': grid_data
-                }, 'json');
-                // this.detail.editor.session.setValue(listvalue);
-                this.enableEditor();
+                  that.keyview.grid.parse({
+                    'rows': grid_data
+                  }, 'json');
+                  // this.detail.editor.session.setValue(listvalue);
+                  this.enableEditor();
+                });
               });
-            });
-            break;
-          case 'set':
-            that.keyview.toolbar.setItemText('data_type', 'SET');
-            cmd = "" ;
-            if (needpass){
-              cmd = that.redisutil.makeCommand('AUTH', conf['passwd']);
-            }
-            cmd += that.redisutil.makeCommand('SELECT', `${db}`);
-            cmd += that.redisutil.makeCommand('SSCAN', `${rdkey}`,'0','COUNT','1000');
-            that.core.request({
-              _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
-            }).then((res2)=>{
-              
-              let ret2 = res2['text'];
-              that.redisutil.parseResponse(that.plugincore.decode(ret2),(valarr2, errarr2)=>{
-                let setvalue = "";
-                if(needpass) {
-                  if(errarr2.length != 3 || valarr2.length != 3){
-                    toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
-                    that.redisutil.parser = that.redisutil.initParser();
-                    return
+              break;
+            case 'set':
+              that.keyview.toolbar.setItemText('data_type', 'SET');
+              cmd = "";
+              if (needpass) {
+                cmd = that.redisutil.makeCommand('AUTH', conf['passwd']);
+              }
+              cmd += that.redisutil.makeCommand('SELECT', `${db}`);
+              cmd += that.redisutil.makeCommand('SSCAN', `${rdkey}`, '0', 'COUNT', '1000');
+              that.core.request({
+                _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
+              }).then((res2) => {
+
+                let ret2 = res2['text'];
+                that.redisutil.parseResponse(that.plugincore.decode(ret2), (valarr2, errarr2) => {
+                  let setvalue = "";
+                  if (needpass) {
+                    if (errarr2.length != 3 || valarr2.length != 3) {
+                      toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
+                      that.redisutil.parser = that.redisutil.initParser();
+                      return
+                    }
+                    if (errarr2[0] != "") {
+                      toastr.error(LANG['error']['auth'](errarr2[0].toString()), LANG_T['error']);
+                      return
+                    }
+                    if (errarr2[2] != "") {
+                      toastr.error(errarr2[2].toString(), LANG_T['error']);
+                      return
+                    }
+                    setvalue = valarr2[2][1];
+                  } else {
+                    if (errarr2.length != 2 || valarr2.length != 2) {
+                      toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
+                      that.redisutil.parser = that.redisutil.initParser();
+                      return
+                    }
+                    if (errarr2[1] != "") {
+                      toastr.error(errarr2[0].toString(), LANG_T['error']);
+                      return
+                    }
+                    setvalue = valarr2[1][1];
                   }
-                  if(errarr2[0] != "") {
-                    toastr.error(LANG['error']['auth'](errarr2[0].toString()), LANG_T['error']);
-                    return
+                  that.keyview.grid.detachHeader(0);
+                  that.keyview.grid.attachHeader("No.,Value");
+                  let grid_data = [];
+                  for (let i = 0; i < setvalue.length; i++) {
+                    grid_data.push({
+                      id: i + 1,
+                      idx: i,
+                      b64val: Buffer.from(setvalue[i]).toString('base64'),
+                      data: [i + 1, antSword.noxss(setvalue[i].toString())]
+                    });
                   }
-                  if(errarr2[2] != "") {
-                    toastr.error(errarr2[2].toString(), LANG_T['error']);
-                    return
-                  }
-                  setvalue = valarr2[2][1];
-                }else{
-                  if(errarr2.length != 2 || valarr2.length != 2){
-                    toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
-                    that.redisutil.parser = that.redisutil.initParser();
-                    return
-                  }
-                  if(errarr2[1] != "") {
-                    toastr.error(errarr2[0].toString(), LANG_T['error']);
-                    return
-                  }
-                  setvalue = valarr2[1][1];
-                }
-                that.keyview.grid.detachHeader(0);
-                that.keyview.grid.attachHeader("No.,Value");
-                let grid_data = [];
-                for(let i=0; i< setvalue.length; i++) {
-                  grid_data.push({
-                    id: i+1,
-                    idx: i,
-                    b64val: new Buffer(setvalue[i]).toString('base64'),
-                    data: [i+1, setvalue[i].toString()]
-                  });
-                }
-                this.keyview.grid.parse({
-                  'rows': grid_data
-                }, 'json');
-                
-                // this.detail.editor.session.setValue(setvalue);
-                this.enableEditor();
+                  this.keyview.grid.parse({
+                    'rows': grid_data
+                  }, 'json');
+
+                  // this.detail.editor.session.setValue(setvalue);
+                  this.enableEditor();
+                });
               });
-            });
-            break;
-          case 'hash':
-            that.keyview.toolbar.setItemText('data_type', 'HASH');
-            cmd = "" ;
-            if (needpass){
-              cmd = that.redisutil.makeCommand('AUTH', conf['passwd']);
-            }
-            cmd += that.redisutil.makeCommand('SELECT', `${db}`);
-            cmd += that.redisutil.makeCommand('HSCAN', `${rdkey}`,'0','COUNT','1000');
-            that.core.request({
-              _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
-            }).then((res2)=>{
-              let ret2 = res2['text'];
-              that.redisutil.parseResponse(that.plugincore.decode(ret2),(valarr2, errarr2)=>{
-                let setvalue = "";
-                if(needpass) {
-                  if(errarr2.length != 3 || valarr2.length != 3){
-                    toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
-                    that.redisutil.parser = that.redisutil.initParser();
-                    return
+              break;
+            case 'hash':
+              that.keyview.toolbar.setItemText('data_type', 'HASH');
+              cmd = "";
+              if (needpass) {
+                cmd = that.redisutil.makeCommand('AUTH', conf['passwd']);
+              }
+              cmd += that.redisutil.makeCommand('SELECT', `${db}`);
+              cmd += that.redisutil.makeCommand('HSCAN', `${rdkey}`, '0', 'COUNT', '1000');
+              that.core.request({
+                _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
+              }).then((res2) => {
+                let ret2 = res2['text'];
+                that.redisutil.parseResponse(that.plugincore.decode(ret2), (valarr2, errarr2) => {
+                  let setvalue = "";
+                  if (needpass) {
+                    if (errarr2.length != 3 || valarr2.length != 3) {
+                      toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
+                      that.redisutil.parser = that.redisutil.initParser();
+                      return
+                    }
+                    if (errarr2[0] != "") {
+                      toastr.error(LANG['error']['auth'](errarr2[0].toString()), LANG_T['error']);
+                      return
+                    }
+                    if (errarr2[2] != "") {
+                      toastr.error(errarr2[2].toString(), LANG_T['error']);
+                      return
+                    }
+                    setvalue = valarr2[2][1];
+                  } else {
+                    if (errarr2.length != 2 || valarr2.length != 2) {
+                      toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
+                      that.redisutil.parser = that.redisutil.initParser();
+                      return
+                    }
+                    if (errarr2[1] != "") {
+                      toastr.error(errarr2[0].toString(), LANG_T['error']);
+                      return
+                    }
+                    setvalue = valarr2[1][1];
                   }
-                  if(errarr2[0] != "") {
-                    toastr.error(LANG['error']['auth'](errarr2[0].toString()), LANG_T['error']);
-                    return
+                  that.keyview.grid.detachHeader(0);
+                  that.keyview.grid.attachHeader("No.,Key,Value");
+                  let grid_data = [];
+                  for (let i = 0; i < setvalue.length / 2; i++) {
+                    grid_data.push({
+                      id: i + 1,
+                      idx: i,
+                      b64val: Buffer.from(setvalue[i * 2]).toString('base64'),
+                      b64val2: Buffer.from(setvalue[i * 2 + 1]).toString('base64'),
+                      data: [
+                        i + 1,
+                        antSword.noxss(setvalue[i * 2].toString(), false),
+                        antSword.noxss(setvalue[i * 2 + 1].toString(), false)
+                      ]
+                    });
                   }
-                  if(errarr2[2] != "") {
-                    toastr.error(errarr2[2].toString(), LANG_T['error']);
-                    return
-                  }
-                  setvalue = valarr2[2][1];
-                }else{
-                  if(errarr2.length != 2 || valarr2.length != 2){
-                    toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
-                    that.redisutil.parser = that.redisutil.initParser();
-                    return
-                  }
-                  if(errarr2[1] != "") {
-                    toastr.error(errarr2[0].toString(), LANG_T['error']);
-                    return
-                  }
-                  setvalue = valarr2[1][1];
-                }
-                that.keyview.grid.detachHeader(0);
-                that.keyview.grid.attachHeader("No.,Key,Value");
-                let grid_data = [];
-                for(let i=0; i< setvalue.length/2; i++) {
-                  grid_data.push({
-                    id: i+1,
-                    idx: i,
-                    b64val: new Buffer(setvalue[i*2]).toString('base64'),
-                    b64val2: new Buffer(setvalue[i*2+1]).toString('base64'),
-                    data: [i+1, setvalue[i*2].toString(), setvalue[i*2+1].toString()]
-                  });
-                }
-                this.keyview.grid.parse({
-                  'rows': grid_data
-                }, 'json');
-                
-                // this.detail.editor.session.setValue(setvalue);
-                this.enableEditor();
+                  this.keyview.grid.parse({
+                    'rows': grid_data
+                  }, 'json');
+
+                  // this.detail.editor.session.setValue(setvalue);
+                  this.enableEditor();
+                });
               });
-            });
-            break;
-          case 'zset':
-            that.keyview.toolbar.setItemText('data_type', 'ZSET');
-            cmd = "" ;
-            if (needpass){
-              cmd = that.redisutil.makeCommand('AUTH', conf['passwd']);
-            }
-            cmd += that.redisutil.makeCommand('SELECT', `${db}`);
-            cmd += that.redisutil.makeCommand('ZRANGE', `${rdkey}`,'0','1000','WITHSCORES');
-            that.core.request({
-              _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
-            }).then((res2)=>{
-              let ret2 = res2['text'];
-              that.redisutil.parseResponse(that.plugincore.decode(ret2),(valarr2, errarr2)=>{
-                let setvalue = "";
-                if(needpass) {
-                  if(errarr2.length != 3 || valarr2.length != 3){
-                    toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
-                    that.redisutil.parser = that.redisutil.initParser();
-                    return
+              break;
+            case 'zset':
+              that.keyview.toolbar.setItemText('data_type', 'ZSET');
+              cmd = "";
+              if (needpass) {
+                cmd = that.redisutil.makeCommand('AUTH', conf['passwd']);
+              }
+              cmd += that.redisutil.makeCommand('SELECT', `${db}`);
+              cmd += that.redisutil.makeCommand('ZRANGE', `${rdkey}`, '0', '1000', 'WITHSCORES');
+              that.core.request({
+                _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
+              }).then((res2) => {
+                let ret2 = res2['text'];
+                that.redisutil.parseResponse(that.plugincore.decode(ret2), (valarr2, errarr2) => {
+                  let setvalue = "";
+                  if (needpass) {
+                    if (errarr2.length != 3 || valarr2.length != 3) {
+                      toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
+                      that.redisutil.parser = that.redisutil.initParser();
+                      return
+                    }
+                    if (errarr2[0] != "") {
+                      toastr.error(LANG['error']['auth'](errarr2[0].toString()), LANG_T['error']);
+                      return
+                    }
+                    if (errarr2[2] != "") {
+                      toastr.error(errarr2[2].toString(), LANG_T['error']);
+                      return
+                    }
+                    setvalue = valarr2[2];
+                  } else {
+                    if (errarr2.length != 2 || valarr2.length != 2) {
+                      toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
+                      that.redisutil.parser = that.redisutil.initParser();
+                      return
+                    }
+                    if (errarr2[1] != "") {
+                      toastr.error(errarr2[0].toString(), LANG_T['error']);
+                      return
+                    }
+                    setvalue = valarr2[1];
                   }
-                  if(errarr2[0] != "") {
-                    toastr.error(LANG['error']['auth'](errarr2[0].toString()), LANG_T['error']);
-                    return
+                  that.keyview.grid.detachHeader(0);
+                  that.keyview.grid.attachHeader("No.,Value,Score");
+                  let grid_data = [];
+                  for (let i = 0; i < setvalue.length / 2; i++) {
+                    grid_data.push({
+                      id: i + 1,
+                      idx: i,
+                      b64val: Buffer.from(setvalue[i * 2]).toString('base64'),
+                      b64val2: Buffer.from(setvalue[i * 2 + 1]).toString('base64'),
+                      data: [
+                        i + 1,
+                        antSword.noxss(setvalue[i * 2].toString(), false),
+                        antSword.noxss(setvalue[i * 2 + 1].toString())
+                      ]
+                    });
                   }
-                  if(errarr2[2] != "") {
-                    toastr.error(errarr2[2].toString(), LANG_T['error']);
-                    return
-                  }
-                  setvalue = valarr2[2];
-                }else{
-                  if(errarr2.length != 2 || valarr2.length != 2){
-                    toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
-                    that.redisutil.parser = that.redisutil.initParser();
-                    return
-                  }
-                  if(errarr2[1] != "") {
-                    toastr.error(errarr2[0].toString(), LANG_T['error']);
-                    return
-                  }
-                  setvalue = valarr2[1];
-                }
-                that.keyview.grid.detachHeader(0);
-                that.keyview.grid.attachHeader("No.,Value,Score");
-                let grid_data = [];
-                for(let i=0; i< setvalue.length/2; i++) {
-                  grid_data.push({
-                    id: i+1,
-                    idx: i,
-                    b64val: new Buffer(setvalue[i*2]).toString('base64'),
-                    b64val2: new Buffer(setvalue[i*2+1]).toString('base64'),
-                    data: [i+1, setvalue[i*2].toString(), setvalue[i*2+1].toString()]
-                  });
-                }
-                this.keyview.grid.parse({
-                  'rows': grid_data
-                }, 'json');
-                
-                // this.detail.editor.session.setValue(setvalue);
-                this.enableEditor();
+                  this.keyview.grid.parse({
+                    'rows': grid_data
+                  }, 'json');
+
+                  // this.detail.editor.session.setValue(setvalue);
+                  this.enableEditor();
+                });
               });
-            });
-            break;
-          case 'none':
-            that.getRedisKeys(id, db);
-            that.disableResultToolbar();
-            that.disableEditor();
-            break;
-          default:
-            toastr.error(LANG['error']['notimpl'](typevalue), LANG_T['error']);
-            break;
-        }
+              break;
+            case 'none':
+              that.getRedisKeys(id, db);
+              that.disableResultToolbar();
+              that.disableEditor();
+              break;
+            default:
+              toastr.error(LANG['error']['notimpl'](typevalue), LANG_T['error']);
+              break;
+          }
+          // that.list.layout.progressOff();
+        });
+      })
+      .catch((err) => {
+        that.redisutil.parser = that.redisutil.initParser();
+        toastr.error(LANG['error']['getkeys'](err['status'] || JSON.stringify(err)), LANG_T['error']);
         // that.list.layout.progressOff();
       });
-    })
-    .catch((err)=>{
-      that.redisutil.parser = that.redisutil.initParser();
-      toastr.error(LANG['error']['getkeys'](err['status'] || JSON.stringify(err)), LANG_T['error']);
-      // that.list.layout.progressOff();
-    });
   }
   /**
    * 新增 Key
@@ -1759,7 +1945,7 @@ class Plugin {
     let that = this;
     const info = this.tree.getSelected().split("::")[1];
     const id = info.split(":")[0];
-    const db = new Buffer(info.split(":")[1], 'base64').toString();
+    const db = Buffer.from(info.split(":")[1], 'base64').toString();
     const conf = that.pluginconf[id];
     const hash = (+new Date * Math.random()).toString(16).substr(2, 8);
     const win = that.win.createWindow(hash, 0, 0, 450, 350);
@@ -1769,14 +1955,15 @@ class Plugin {
     win.setModal(true);
     win.denyResize();
     const toolbar = win.attachToolbar();
-    toolbar.loadStruct([
-      {
+    toolbar.loadStruct([{
         id: 'add',
         type: 'button',
         icon: 'plus-circle',
         text: LANG['addkey']['toolbar']['add'],
       },
-      { type: 'separator' },
+      {
+        type: 'separator'
+      },
       {
         id: 'clear',
         type: 'button',
@@ -1785,57 +1972,183 @@ class Plugin {
       }
     ]);
 
-    const form = win.attachForm([
-      {type: 'settings', position: 'label-left', labelWidth: 90, inputWidth: 250 },
-      { type: 'block', inputWidth: 'auto', offsetTop: 12, list: [
-        { type: 'input', label: LANG['addkey']['form']['name'], name: 'key_name', required: true },
-        { type: 'combo', label: LANG['addkey']['form']['keytype'], readonly: true, name: 'type', options: [
-          { text: 'String', value: 'string', list: [
-            { type: 'settings', position: 'label-left', offsetLeft: 70, labelWidth: 250, inputWidth: 150 },
-            { type: 'label', label: `${LANG['addkey']['form']['value']}(${LANG['addkey']['info']['covernx']})` },
-            { type: 'input', name: 'string_value', rows: 10, inputWidth: 250, required: true}
-          ]},
-          { text: 'List', value: 'list', list: [
-            { type: 'settings', position: 'label-left', offsetLeft: 70, labelWidth: 250, inputWidth: 150 },
-            { type: 'label', label: `${LANG['addkey']['form']['value']}(${LANG['addkey']['info']['onemember']})`,},
-            { type: 'input', name: 'list_value', rows: 10, inputWidth: 250, required: true}
-          ]},
-          { text: 'Set', value: 'set', list: [
-            { type: 'settings', position: 'label-left', offsetLeft: 70, labelWidth: 250, inputWidth: 150 },
-            { type: 'label', label: `${LANG['addkey']['form']['value']}(${LANG['addkey']['info']['onemember']})` },
-            { type: 'input', name: 'set_value', rows: 10, inputWidth: 250, required: true}
-          ]},
-          { text: 'ZSet', value: 'zset', list: [
-            { type: 'settings', position: 'label-left', offsetLeft: 70, labelWidth: 250, inputWidth: 150 },
-            { type: 'label', label: `${LANG['addkey']['form']['value']}(${LANG['addkey']['info']['onemember']})` },
-            { type: 'input', name: 'zset_value', rows: 4, inputWidth: 250, required: true},
-            { type: 'label', label: `${LANG['addkey']['form']['score']}(${LANG['addkey']['info']['score']})` },
-            { type: 'input', name: 'zset_score', inputWidth: 250, required: true, validate: 'ValidNumeric', }
-          ]},
-          { text: 'Hash', value: 'hash', list: [
-            { type: 'settings', position: 'label-left', offsetLeft: 70, labelWidth: 250, inputWidth: 150 },
-            { type: 'label', label: `${LANG['addkey']['form']['hashkey']}(${LANG['addkey']['info']['covernx']})` },
-            { type: 'input', name: 'hash_key', rows: 3, inputWidth: 250, required: true},
-            { type: 'label', label: LANG['addkey']['form']['hashvalue'] },
-            { type: 'input', name: 'hash_value', rows: 4, inputWidth: 250, required: true}
-          ]},
-        ]}
-      ]}
+    const form = win.attachForm([{
+        type: 'settings',
+        position: 'label-left',
+        labelWidth: 90,
+        inputWidth: 250
+      },
+      {
+        type: 'block',
+        inputWidth: 'auto',
+        offsetTop: 12,
+        list: [{
+            type: 'input',
+            label: LANG['addkey']['form']['name'],
+            name: 'key_name',
+            required: true
+          },
+          {
+            type: 'combo',
+            label: LANG['addkey']['form']['keytype'],
+            readonly: true,
+            name: 'type',
+            options: [{
+                text: 'String',
+                value: 'string',
+                list: [{
+                    type: 'settings',
+                    position: 'label-left',
+                    offsetLeft: 70,
+                    labelWidth: 250,
+                    inputWidth: 150
+                  },
+                  {
+                    type: 'label',
+                    label: `${LANG['addkey']['form']['value']}(${LANG['addkey']['info']['covernx']})`
+                  },
+                  {
+                    type: 'input',
+                    name: 'string_value',
+                    rows: 10,
+                    inputWidth: 250,
+                    required: true
+                  }
+                ]
+              },
+              {
+                text: 'List',
+                value: 'list',
+                list: [{
+                    type: 'settings',
+                    position: 'label-left',
+                    offsetLeft: 70,
+                    labelWidth: 250,
+                    inputWidth: 150
+                  },
+                  {
+                    type: 'label',
+                    label: `${LANG['addkey']['form']['value']}(${LANG['addkey']['info']['onemember']})`,
+                  },
+                  {
+                    type: 'input',
+                    name: 'list_value',
+                    rows: 10,
+                    inputWidth: 250,
+                    required: true
+                  }
+                ]
+              },
+              {
+                text: 'Set',
+                value: 'set',
+                list: [{
+                    type: 'settings',
+                    position: 'label-left',
+                    offsetLeft: 70,
+                    labelWidth: 250,
+                    inputWidth: 150
+                  },
+                  {
+                    type: 'label',
+                    label: `${LANG['addkey']['form']['value']}(${LANG['addkey']['info']['onemember']})`
+                  },
+                  {
+                    type: 'input',
+                    name: 'set_value',
+                    rows: 10,
+                    inputWidth: 250,
+                    required: true
+                  }
+                ]
+              },
+              {
+                text: 'ZSet',
+                value: 'zset',
+                list: [{
+                    type: 'settings',
+                    position: 'label-left',
+                    offsetLeft: 70,
+                    labelWidth: 250,
+                    inputWidth: 150
+                  },
+                  {
+                    type: 'label',
+                    label: `${LANG['addkey']['form']['value']}(${LANG['addkey']['info']['onemember']})`
+                  },
+                  {
+                    type: 'input',
+                    name: 'zset_value',
+                    rows: 4,
+                    inputWidth: 250,
+                    required: true
+                  },
+                  {
+                    type: 'label',
+                    label: `${LANG['addkey']['form']['score']}(${LANG['addkey']['info']['score']})`
+                  },
+                  {
+                    type: 'input',
+                    name: 'zset_score',
+                    inputWidth: 250,
+                    required: true,
+                    validate: 'ValidNumeric',
+                  }
+                ]
+              },
+              {
+                text: 'Hash',
+                value: 'hash',
+                list: [{
+                    type: 'settings',
+                    position: 'label-left',
+                    offsetLeft: 70,
+                    labelWidth: 250,
+                    inputWidth: 150
+                  },
+                  {
+                    type: 'label',
+                    label: `${LANG['addkey']['form']['hashkey']}(${LANG['addkey']['info']['covernx']})`
+                  },
+                  {
+                    type: 'input',
+                    name: 'hash_key',
+                    rows: 3,
+                    inputWidth: 250,
+                    required: true
+                  },
+                  {
+                    type: 'label',
+                    label: LANG['addkey']['form']['hashvalue']
+                  },
+                  {
+                    type: 'input',
+                    name: 'hash_value',
+                    rows: 4,
+                    inputWidth: 250,
+                    required: true
+                  }
+                ]
+              },
+            ]
+          }
+        ]
+      }
     ], true);
 
-    toolbar.attachEvent('onClick', (btnid)=>{
-      switch(btnid){
+    toolbar.attachEvent('onClick', (btnid) => {
+      switch (btnid) {
         case 'clear':
           form.clear();
           break;
         case 'add':
-          if(!form.validate()) {
+          if (!form.validate()) {
             return toastr.warning(LANG['addkey']['info']['warning'], LANG_T['warning']);
           }
           let addcmd = "";
           // 解析数据
           let data = form.getValues();
-          switch(data['type']){
+          switch (data['type']) {
             case "string":
               addcmd += that.redisutil.makeCommand('SET', data["key_name"], data["string_value"]);
               break;
@@ -1852,7 +2165,7 @@ class Plugin {
               addcmd += that.redisutil.makeCommand("HSET", data["key_name"], data["hash_key"], data["hash_value"]);
               break;
           }
-          if(addcmd.length <= 0) {
+          if (addcmd.length <= 0) {
             return toastr.warning(LANG['addkey']['info']['warning'], LANG_T['warning']);
           }
           let cmd = "";
@@ -1865,60 +2178,60 @@ class Plugin {
           cmd += addcmd;
           that.plugincore.setHost(conf['host']);
           that.core.request({
-            _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
-          }).then((res)=>{
+            _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
+          }).then((res) => {
             let ret = res['text'];
-            that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr) => {
+            that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
               let retval;
-              if(needpass) {
-                if(errarr.length != 3 || valarr.length != 3){
-                  toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+              if (needpass) {
+                if (errarr.length != 3 || valarr.length != 3) {
+                  toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
                   that.redisutil.parser = that.redisutil.initParser();
                   return
                 }
-                if(errarr[0] != "") {
+                if (errarr[0] != "") {
                   toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
                   return
                 }
-                if(errarr[2] != "") {
+                if (errarr[2] != "") {
                   toastr.error(errarr[2].toString(), LANG_T['error']);
                   return
                 }
                 retval = valarr[2];
-              }else{
-                if(errarr.length != 2 || valarr.length != 2){
-                  toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+              } else {
+                if (errarr.length != 2 || valarr.length != 2) {
+                  toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
                   that.redisutil.parser = that.redisutil.initParser();
                   return
                 }
-                if(errarr[1] != "") {
+                if (errarr[1] != "") {
                   toastr.error(errarr[1].toString(), LANG_T['error']);
                   return
                 }
                 retval = valarr[1];
               }
-              switch(data['type']){
+              switch (data['type']) {
                 case 'zset':
                   // 0 添加已经存在元素
-                  if (typeof retval == "number" && retval == 0){
+                  if (typeof retval == "number" && retval == 0) {
                     toastr.success(LANG['addkey']['info']['zsetsuccess'](data['zset_value']), LANG_T['success']);
-                  }else{
+                  } else {
                     toastr.success(LANG['addkey']['info']['success'], LANG_T['success']);
                   }
                   break;
                 case 'hash':
                   // 0 添加已经存在元素
-                  if (typeof retval == "number" && retval == 0){
+                  if (typeof retval == "number" && retval == 0) {
                     toastr.success(LANG['addkey']['info']['hashsuccess'](data['hash_key']), LANG_T['success']);
-                  }else{
+                  } else {
                     toastr.success(LANG['addkey']['info']['success'], LANG_T['success']);
                   }
                   break;
                 default:
                   // 可能是 OK 可能是 int
-                  if((typeof retval ==  "object" && new Buffer(retval).toString() == "OK") || (typeof retval == "number" && parseInt(retval) > 0)) {
+                  if ((typeof retval == "object" && Buffer.from(retval).toString() == "OK") || (typeof retval == "number" && parseInt(retval) > 0)) {
                     toastr.success(LANG['addkey']['info']['success'], LANG_T['success']);
-                  }else{
+                  } else {
                     toastr.error(LANG['addkey']['info']['error'], LANG_T['error']);
                     that.getRedisKeys(id, db);
                     return
@@ -1928,7 +2241,7 @@ class Plugin {
               win.close();
               that.getRedisKeys(id, db);
             });
-          }).catch((err)=>{
+          }).catch((err) => {
             that.redisutil.parser = that.redisutil.initParser();
           });
           break;
@@ -1956,14 +2269,15 @@ class Plugin {
     win.setModal(true);
     win.denyResize();
     const toolbar = win.attachToolbar();
-    toolbar.loadStruct([
-      {
+    toolbar.loadStruct([{
         id: 'add',
         type: 'button',
         icon: 'plus-circle',
         text: LANG['insertitem']['toolbar']['add'],
       },
-      { type: 'separator' },
+      {
+        type: 'separator'
+      },
       {
         id: 'clear',
         type: 'button',
@@ -1971,48 +2285,151 @@ class Plugin {
         text: LANG['insertitem']['toolbar']['clear'],
       }
     ]);
-    const form = win.attachForm([
-      {type: 'settings', position: 'label-left', labelWidth: 150, inputWidth: 150 },
-      { type: 'block', inputWidth: 'auto', offsetTop: 12, list: [
-          { type:'block', hidden: keytype != "list", disabled: keytype != "list", list: [ // LIST
-            { type: 'settings', position: 'label-left', offsetLeft: 12, labelWidth: 250, inputWidth: 150 },
-            { type: 'label', label: `${LANG['addkey']['form']['value']}(${LANG['addkey']['info']['onemember']})`,},
-            { type: 'input', name: 'list_value', rows: 10, inputWidth: 250, required: true}
-          ]},
-          { type: 'block', hidden: keytype != "set", disabled: keytype != "set", list: [
-            { type: 'settings', position: 'label-left', offsetLeft: 12, labelWidth: 250, inputWidth: 150 },
-            { type: 'label', label: `${LANG['addkey']['form']['value']}(${LANG['addkey']['info']['onemember']})` },
-            { type: 'input', name: 'set_value', rows: 10, inputWidth: 250, required: true}
-          ]},
-          { type: 'block', hidden: keytype != "zset", disabled: keytype != "zset", list: [
-            { type: 'settings', position: 'label-left', offsetLeft: 12, labelWidth: 250, inputWidth: 150 },
-            { type: 'label', label: `${LANG['addkey']['form']['value']}(${LANG['addkey']['info']['onemember']})` },
-            { type: 'input', name: 'zset_value', rows: 4, inputWidth: 250, required: true},
-            { type: 'label', label: `${LANG['addkey']['form']['score']}(${LANG['addkey']['info']['score']})` },
-            { type: 'input', name: 'zset_score', inputWidth: 250, required: true, validate: 'ValidNumeric', }
-          ]},
-          { type: 'block', hidden: keytype != "hash", disabled: keytype != "hash", list: [
-            { type: 'settings', position: 'label-left', offsetLeft: 12, labelWidth: 250, inputWidth: 150 },
-            { type: 'label', label: `${LANG['addkey']['form']['hashkey']}(${LANG['addkey']['info']['covernx']})` },
-            { type: 'input', name: 'hash_key', rows: 3, inputWidth: 250, required: true},
-            { type: 'label', label: LANG['addkey']['form']['hashvalue'] },
-            { type: 'input', name: 'hash_value', rows: 4, inputWidth: 250, required: true}
-          ]},
-        ]}
+    const form = win.attachForm([{
+        type: 'settings',
+        position: 'label-left',
+        labelWidth: 150,
+        inputWidth: 150
+      },
+      {
+        type: 'block',
+        inputWidth: 'auto',
+        offsetTop: 12,
+        list: [{
+            type: 'block',
+            hidden: keytype != "list",
+            disabled: keytype != "list",
+            list: [ // LIST
+              {
+                type: 'settings',
+                position: 'label-left',
+                offsetLeft: 12,
+                labelWidth: 250,
+                inputWidth: 150
+              },
+              {
+                type: 'label',
+                label: `${LANG['addkey']['form']['value']}(${LANG['addkey']['info']['onemember']})`,
+              },
+              {
+                type: 'input',
+                name: 'list_value',
+                rows: 10,
+                inputWidth: 250,
+                required: true
+              }
+            ]
+          },
+          {
+            type: 'block',
+            hidden: keytype != "set",
+            disabled: keytype != "set",
+            list: [{
+                type: 'settings',
+                position: 'label-left',
+                offsetLeft: 12,
+                labelWidth: 250,
+                inputWidth: 150
+              },
+              {
+                type: 'label',
+                label: `${LANG['addkey']['form']['value']}(${LANG['addkey']['info']['onemember']})`
+              },
+              {
+                type: 'input',
+                name: 'set_value',
+                rows: 10,
+                inputWidth: 250,
+                required: true
+              }
+            ]
+          },
+          {
+            type: 'block',
+            hidden: keytype != "zset",
+            disabled: keytype != "zset",
+            list: [{
+                type: 'settings',
+                position: 'label-left',
+                offsetLeft: 12,
+                labelWidth: 250,
+                inputWidth: 150
+              },
+              {
+                type: 'label',
+                label: `${LANG['addkey']['form']['value']}(${LANG['addkey']['info']['onemember']})`
+              },
+              {
+                type: 'input',
+                name: 'zset_value',
+                rows: 4,
+                inputWidth: 250,
+                required: true
+              },
+              {
+                type: 'label',
+                label: `${LANG['addkey']['form']['score']}(${LANG['addkey']['info']['score']})`
+              },
+              {
+                type: 'input',
+                name: 'zset_score',
+                inputWidth: 250,
+                required: true,
+                validate: 'ValidNumeric',
+              }
+            ]
+          },
+          {
+            type: 'block',
+            hidden: keytype != "hash",
+            disabled: keytype != "hash",
+            list: [{
+                type: 'settings',
+                position: 'label-left',
+                offsetLeft: 12,
+                labelWidth: 250,
+                inputWidth: 150
+              },
+              {
+                type: 'label',
+                label: `${LANG['addkey']['form']['hashkey']}(${LANG['addkey']['info']['covernx']})`
+              },
+              {
+                type: 'input',
+                name: 'hash_key',
+                rows: 3,
+                inputWidth: 250,
+                required: true
+              },
+              {
+                type: 'label',
+                label: LANG['addkey']['form']['hashvalue']
+              },
+              {
+                type: 'input',
+                name: 'hash_value',
+                rows: 4,
+                inputWidth: 250,
+                required: true
+              }
+            ]
+          },
+        ]
+      }
     ], true);
-    toolbar.attachEvent('onClick', (btnid)=>{
-      switch(btnid){
+    toolbar.attachEvent('onClick', (btnid) => {
+      switch (btnid) {
         case 'clear':
           form.clear();
           break;
         case 'add':
-          if(!form.validate()) {
+          if (!form.validate()) {
             return toastr.warning(LANG['addkey']['info']['warning'], LANG_T['warning']);
           }
           let addcmd = "";
           // 解析数据
           let data = form.getValues();
-          switch(keytype){
+          switch (keytype) {
             case "list":
               addcmd += that.redisutil.makeCommand('LPUSH', rediskey, data["list_value"]);
               break;
@@ -2026,7 +2443,7 @@ class Plugin {
               addcmd += that.redisutil.makeCommand("HSET", rediskey, data["hash_key"], data["hash_value"]);
               break;
           }
-          if(addcmd.length <= 0) {
+          if (addcmd.length <= 0) {
             return toastr.warning(LANG['addkey']['info']['warning'], LANG_T['warning']);
           }
           let cmd = "";
@@ -2039,60 +2456,60 @@ class Plugin {
           cmd += addcmd;
           that.plugincore.setHost(conf['host']);
           that.core.request({
-            _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
-          }).then((res)=>{
+            _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
+          }).then((res) => {
             let ret = res['text'];
-            that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr) => {
+            that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
               let retval;
-              if(needpass) {
-                if(errarr.length != 3 || valarr.length != 3){
-                  toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+              if (needpass) {
+                if (errarr.length != 3 || valarr.length != 3) {
+                  toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
                   that.redisutil.parser = that.redisutil.initParser();
                   return
                 }
-                if(errarr[0] != "") {
+                if (errarr[0] != "") {
                   toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
                   return
                 }
-                if(errarr[2] != "") {
+                if (errarr[2] != "") {
                   toastr.error(errarr[2].toString(), LANG_T['error']);
                   return
                 }
                 retval = valarr[2];
-              }else{
-                if(errarr.length != 2 || valarr.length != 2){
-                  toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+              } else {
+                if (errarr.length != 2 || valarr.length != 2) {
+                  toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
                   that.redisutil.parser = that.redisutil.initParser();
                   return
                 }
-                if(errarr[1] != "") {
+                if (errarr[1] != "") {
                   toastr.error(errarr[1].toString(), LANG_T['error']);
                   return
                 }
                 retval = valarr[1];
               }
-              switch(keytype){
+              switch (keytype) {
                 case 'zset':
                   // 0 添加已经存在元素
-                  if (typeof retval == "number" && retval == 0){
+                  if (typeof retval == "number" && retval == 0) {
                     toastr.success(LANG['addkey']['info']['zsetsuccess'](data['zset_value']), LANG_T['success']);
-                  }else{
+                  } else {
                     toastr.success(LANG['addkey']['info']['success'], LANG_T['success']);
                   }
                   break;
                 case 'hash':
                   // 0 添加已经存在元素
-                  if (typeof retval == "number" && retval == 0){
+                  if (typeof retval == "number" && retval == 0) {
                     toastr.success(LANG['addkey']['info']['hashsuccess'](data['hash_key']), LANG_T['success']);
-                  }else{
+                  } else {
                     toastr.success(LANG['addkey']['info']['success'], LANG_T['success']);
                   }
                   break;
                 default:
                   // 可能是 OK 可能是 int
-                  if((typeof retval ==  "object" && new Buffer(retval).toString() == "OK") || (typeof retval == "number" && parseInt(retval) > 0)) {
+                  if ((typeof retval == "object" && Buffer.from(retval).toString() == "OK") || (typeof retval == "number" && parseInt(retval) > 0)) {
                     toastr.success(LANG['addkey']['info']['success'], LANG_T['success']);
-                  }else{
+                  } else {
                     toastr.error(LANG['addkey']['info']['error'], LANG_T['error']);
                     that.getKeysValue(id, db, rediskey);
                     return
@@ -2102,7 +2519,7 @@ class Plugin {
               win.close();
               that.getKeysValue(id, db, rediskey);
             });
-          }).catch((err)=>{
+          }).catch((err) => {
             that.redisutil.parser = that.redisutil.initParser();
           });
           break;
@@ -2121,14 +2538,13 @@ class Plugin {
     const rediskey = opt['rediskey'];
     const keytype = opt['keytype'];
     const idx = opt['idx'];
-    const ivalue = new Buffer(opt['ivalue_b64'], "base64").toString();
-    if(ivalue.length <= 0){
+    const ivalue = Buffer.from(opt['ivalue_b64'], "base64").toString();
+    if (ivalue.length <= 0) {
       toastr.warning(LANG['delitem']['error']['novalue'], LANG_T['warning']);
       return
     }
     layer.confirm(
-      LANG['delitem']['confirm'],
-      {
+      LANG['delitem']['confirm'], {
         icon: 2,
         shift: 6,
         title: `<i class="fa fa-trash"></i> ${LANG['delitem']['title']}`,
@@ -2142,7 +2558,7 @@ class Plugin {
           needpass = true;
         }
         cmd += that.redisutil.makeCommand('SELECT', db);
-        switch(keytype){
+        switch (keytype) {
           case 'list':
             // 第一步,修改值
             cmd += that.redisutil.makeCommand('LSET', rediskey, String(idx), "---VALUE_REMOVED_BY_ANTSWORD---");
@@ -2160,71 +2576,71 @@ class Plugin {
             break;
         }
         that.core.request({
-          _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
-        }).then((res)=>{
+          _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
+        }).then((res) => {
           let ret = res['text'];
-          that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr) => {
+          that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
             let retval;
             // 检查解析是否正确
-            if(needpass) {
-              if (keytype == 'list' && (errarr.length != 4 || valarr.length != 4)){
-                toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+            if (needpass) {
+              if (keytype == 'list' && (errarr.length != 4 || valarr.length != 4)) {
+                toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
                 that.redisutil.parser = that.redisutil.initParser();
                 return
               }
-              if(keytype != 'list' && (errarr.length != 3 || valarr.length != 3)){
-                toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+              if (keytype != 'list' && (errarr.length != 3 || valarr.length != 3)) {
+                toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
                 that.redisutil.parser = that.redisutil.initParser();
                 return
               }
-            }else{
-              if (keytype == 'list' && (errarr.length != 3 || valarr.length != 3)){
-                toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+            } else {
+              if (keytype == 'list' && (errarr.length != 3 || valarr.length != 3)) {
+                toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
                 that.redisutil.parser = that.redisutil.initParser();
                 return
               }
-              if (keytype != 'list' && (errarr.length != 2 || valarr.length != 2)){
-                toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+              if (keytype != 'list' && (errarr.length != 2 || valarr.length != 2)) {
+                toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
                 that.redisutil.parser = that.redisutil.initParser();
                 return
               }
             }
             // 检查认证情况
-            if(needpass) {
-              if(errarr[0] != "") {
+            if (needpass) {
+              if (errarr[0] != "") {
                 toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
                 return
               }
               errarr = errarr.slice(1);
               valarr = valarr.slice(1);
             }
-            if(errarr[1] != "") {
+            if (errarr[1] != "") {
               toastr.error(errarr[1].toString(), LANG_T['error']);
             }
             // 针对 list 额外检查重命名情况
-            if(keytype == "list") {
-              if(errarr[2] != "") {
+            if (keytype == "list") {
+              if (errarr[2] != "") {
                 toastr.error(errarr[2].toString(), LANG_T['error']);
               }
               retval = valarr[2];
-            }else{
+            } else {
               retval = valarr[1];
             }
 
-            if((typeof retval ==  "object" && new Buffer(retval).toString() == "OK") || (typeof retval == "number" && parseInt(retval) > 0)) {
+            if ((typeof retval == "object" && Buffer.from(retval).toString() == "OK") || (typeof retval == "number" && parseInt(retval) > 0)) {
               toastr.success(LANG['delitem']['success'], LANG_T['success']);
-            }else{
+            } else {
               toastr.error(LANG['delitem']['error'], LANG_T['error']);
             }
             that.getKeysValue(id, db, rediskey);
             return
           });
-        }).catch((err)=>{
+        }).catch((err) => {
           that.redisutil.parser = that.redisutil.initParser();
         });
       });
   }
-  
+
   editZsetKeyScore(opt) {
     let that = this;
     const id = opt['id'];
@@ -2232,12 +2648,12 @@ class Plugin {
     const db = opt['db'];
     const rediskey = opt['rediskey'];
     const idx = opt['idx'];
-    const ivalue = new Buffer(opt['ivalue_b64'], "base64").toString();
-    const ivalue2 = new Buffer(opt['ivalue2_b64'], "base64").toString();
+    const ivalue = Buffer.from(opt['ivalue_b64'], "base64").toString();
+    const ivalue2 = Buffer.from(opt['ivalue2_b64'], "base64").toString();
     layer.prompt({
       value: ivalue2,
       title: LANG['edititem']['zset']['title'],
-    },(value, index, elem) => {
+    }, (value, index, elem) => {
       layer.close(index);
       var needpass = false;
       var cmd = "";
@@ -2246,51 +2662,51 @@ class Plugin {
         needpass = true;
       }
       cmd += that.redisutil.makeCommand('SELECT', db);
-      
+
       cmd += that.redisutil.makeCommand('ZREM', rediskey, ivalue);
       cmd += that.redisutil.makeCommand('ZADD', rediskey, value, ivalue);
       that.core.request({
-        _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
-      }).then((res)=>{
+        _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
+      }).then((res) => {
         let ret = res['text'];
-        that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
+        that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
           var retval;
-          if(needpass) {
-            if(errarr.length != 4 || valarr.length != 4){
-              toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+          if (needpass) {
+            if (errarr.length != 4 || valarr.length != 4) {
+              toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
               that.redisutil.parser = that.redisutil.initParser();
               return
             }
-            if(errarr[0] != "") {
+            if (errarr[0] != "") {
               toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
               return
             }
-            if(errarr[3].length > 0) {
+            if (errarr[3].length > 0) {
               toastr.error(errarr[3].toString(), LANG_T['error']);
               return
             }
             retval = valarr[3];
-          }else{
-            if(errarr.length != 3 || valarr.length != 3){
-              toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+          } else {
+            if (errarr.length != 3 || valarr.length != 3) {
+              toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
               that.redisutil.parser = that.redisutil.initParser();
               return
             }
-            if(errarr[2] != "") {
+            if (errarr[2] != "") {
               toastr.error(errarr[2].toString(), LANG_T['error']);
               return
             }
             retval = valarr[2];
           }
-          if(parseInt(retval) > 0) {
-            toastr.success(LANG['edititem']['success'],LANG_T['success']);
+          if (parseInt(retval) > 0) {
+            toastr.success(LANG['edititem']['success'], LANG_T['success']);
             that.getKeysValue(id, db, rediskey);
-          }else{
-            toastr.error(LANG['edititem']['error'],LANG_T['error']);
+          } else {
+            toastr.error(LANG['edititem']['error'], LANG_T['error']);
             return
           }
         });
-      }).catch((err)=>{
+      }).catch((err) => {
         that.redisutil.parser = that.redisutil.initParser();
       });
     });
@@ -2303,12 +2719,12 @@ class Plugin {
     const db = opt['db'];
     const rediskey = opt['rediskey'];
     const idx = opt['idx'];
-    const ivalue = new Buffer(opt['ivalue_b64'], "base64").toString();
-    const ivalue2 = new Buffer(opt['ivalue2_b64'], "base64").toString();
+    const ivalue = Buffer.from(opt['ivalue_b64'], "base64").toString();
+    const ivalue2 = Buffer.from(opt['ivalue2_b64'], "base64").toString();
     layer.prompt({
       value: ivalue2,
       title: LANG['edititem']['zset']['title'],
-    },(value, index, elem) => {
+    }, (value, index, elem) => {
       layer.close(index);
       var needpass = false;
       var cmd = "";
@@ -2319,52 +2735,52 @@ class Plugin {
       cmd += that.redisutil.makeCommand('SELECT', db);
       cmd += that.redisutil.makeCommand('HSET', rediskey, ivalue, value);
       that.core.request({
-        _: that.plugincore.template[that.opt['type']](new Buffer(cmd))
-      }).then((res)=>{
+        _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
+      }).then((res) => {
         let ret = res['text'];
-        that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
+        that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
           var retval;
-          if(needpass) {
-            if(errarr.length != 3 || valarr.length != 3){
-              toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+          if (needpass) {
+            if (errarr.length != 3 || valarr.length != 3) {
+              toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
               that.redisutil.parser = that.redisutil.initParser();
               return
             }
-            if(errarr[0] != "") {
+            if (errarr[0] != "") {
               toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
               return
             }
-            if(errarr[2] != "") {
+            if (errarr[2] != "") {
               toastr.error(errarr[2].toString(), LANG_T['error']);
               return
             }
             retval = valarr[2];
-          }else{
-            if(errarr.length != 2 || valarr.length != 2){
-              toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+          } else {
+            if (errarr.length != 2 || valarr.length != 2) {
+              toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
               that.redisutil.parser = that.redisutil.initParser();
               return
             }
-            if(errarr[1] != "") {
+            if (errarr[1] != "") {
               toastr.error(errarr[1].toString(), LANG_T['error']);
               return
             }
             retval = valarr[1];
           }
-          if(parseInt(retval) == 0) {
-            toastr.success(LANG['edititem']['success'],LANG_T['success']);
+          if (parseInt(retval) == 0) {
+            toastr.success(LANG['edititem']['success'], LANG_T['success']);
             that.getKeysValue(id, db, rediskey);
-          }else{
-            toastr.error(LANG['edititem']['error'],LANG_T['error']);
+          } else {
+            toastr.error(LANG['edititem']['error'], LANG_T['error']);
             return
           }
         });
-      }).catch((err)=>{
+      }).catch((err) => {
         that.redisutil.parser = that.redisutil.initParser();
       });
     });
   }
-  // 创建用户 redis 命令行
+  // redis 命令行
   initRedisTerminal(id, db) {
     let that = this;
     const conf = that.pluginconf[id];
@@ -2392,12 +2808,18 @@ class Plugin {
     let banner = `${LANG['terminal']['banner']}`;
     let promptStr = `[[b;cyan;]${conf['host']}][[b;#E80000;](${db})]> `;
     let dom = $(`#div_redisterminal_${hash}`);
-    let terminal = dom.terminal( (cmd, term) => {
-      if (!cmd) { return false }
+    let terminal = dom.terminal((cmd, term) => {
+      if (!cmd) {
+        return false
+      }
       cmd = cmd.trim();
-      if (cmd === 'exit' || cmd === 'quit') { return win.close() }
-      if (cmd === 'cls' || cmd === 'clear') { return term.clear() }
-      if (cmd.toLowerCase().startsWith('select')){
+      if (cmd === 'exit' || cmd === 'quit') {
+        return win.close()
+      }
+      if (cmd === 'cls' || cmd === 'clear') {
+        return term.clear()
+      }
+      if (cmd.toLowerCase().startsWith('select')) {
         toastr.warning(LANG['error']['notimplselect'], LANG_T['warning']);
         return
       }
@@ -2405,55 +2827,59 @@ class Plugin {
       let cmds = [];
       // 由于目前版本的 chrome 不支持正向后瞻和负向后瞻,待未来升级框架后使用该表达式
       // cmd.match(/(?<=\s\").+?(?<!\\)(?=")|(?<=\s').+?(?<!\\)(?=')|([_/\w]+)/g)
-      split_string(cmd, {quotes:['"', "'"],separator:' ',brackets:true }).forEach((v)=>{
+      split_string(cmd, {
+        quotes: ['"', "'"],
+        separator: ' ',
+        brackets: true
+      }).forEach((v) => {
         var tmpv = v;
-        if(tmpv.startsWith('"') || tmpv.startsWith("'")){
-          tmpv = tmpv.substring(1,tmpv.length-1);
+        if (tmpv.startsWith('"') || tmpv.startsWith("'")) {
+          tmpv = tmpv.substring(1, tmpv.length - 1);
           tmpv = tmpv.replace(/\\(.)/mg, "$1"); // 只进行一次 stripslashes
         }
         cmds.push(tmpv);
       })
       let usercmd = basecmd + that.redisutil.makeCommand(...cmds);
       that.core.request({
-        _: that.plugincore.template[that.opt['type']](new Buffer(usercmd))
-      }).then((res)=>{
+        _: that.plugincore.template[that.opt['type']](Buffer.from(usercmd))
+      }).then((res) => {
         let ret = res['text'];
-        that.redisutil.parseResponse(that.plugincore.decode(ret),(valarr, errarr)=>{
+        that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
           var retval;
-          if(needpass) {
-            if(errarr.length != 3 || valarr.length != 3){
-              toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+          if (needpass) {
+            if (errarr.length != 3 || valarr.length != 3) {
+              toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
               that.redisutil.parser = that.redisutil.initParser();
               return
             }
-            if(errarr[0] != "") {
+            if (errarr[0] != "") {
               toastr.error(LANG['error']['auth'](errarr[0].toString()), LANG_T['error']);
               return
             }
-            if(errarr[2] != "") {
+            if (errarr[2] != "") {
               toastr.error(errarr[2].toString(), LANG_T['error']);
               return
             }
             retval = valarr[2];
-          }else{
-            if(errarr.length != 2 || valarr.length != 2){
-              toastr.warning(LANG['error']['parseerr'],LANG_T['warning']);
+          } else {
+            if (errarr.length != 2 || valarr.length != 2) {
+              toastr.warning(LANG['error']['parseerr'], LANG_T['warning']);
               that.redisutil.parser = that.redisutil.initParser();
               return
             }
-            if(errarr[1] != "") {
+            if (errarr[1] != "") {
               toastr.error(errarr[1].toString(), LANG_T['error']);
               return
             }
             retval = valarr[1];
           }
           let output = "";
-          if (retval instanceof Array){
-            retval.forEach((_val, _index)=>{
+          if (retval instanceof Array) {
+            retval.forEach((_val, _index) => {
               output += `${_index+1}) ${_val.toString()}\n`;
             });
-            output = output.slice(0,-1);
-          }else if(retval instanceof Buffer){
+            output = output.slice(0, -1);
+          } else if (retval instanceof Buffer) {
             output = retval.toString();
           }
           term.echo(
@@ -2475,7 +2901,7 @@ class Plugin {
     });
   }
   resetView() {
-    this.KeyBinaryData = new Buffer('');
+    this.KeyBinaryData = Buffer.from('');
     this.detail.toolbar.setItemText('data_size', 'Size:0b');
     this.detail.editor.session.setValue("");
     this.keyview.grid.clearAll();
@@ -2493,7 +2919,7 @@ class Plugin {
   disableToolbar() {
     this.resetView();
     this.list.toolbar.disableItem('edit');
-    this.list.toolbar.disableItem('del');  
+    this.list.toolbar.disableItem('del');
   }
 
   enableEditor() {

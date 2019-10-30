@@ -1,22 +1,21 @@
-
 'use strict'
 
 class Core {
-  constructor(opt={}) {
-    this.host = opt['host']||"127.0.0.1:6379";
+  constructor(opt = {}) {
+    this.host = opt['host'] || "127.0.0.1:6379";
   }
 
   setHost(host) {
     this.host = host;
   }
-  
+
   // 将 buffer 转为 base64 string
   encode(buffer) {
-    return new Buffer(buffer).toString('base64');
+    return Buffer.from(buffer).toString('base64');
   }
 
   decode(str) {
-    return new Buffer(str, 'base64');
+    return Buffer.from(str, 'base64');
   }
 
   get template() {

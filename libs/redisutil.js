@@ -36,7 +36,7 @@ class RedisUtil {
     this.replyarr = Array();
     this.errarr = Array();
   }
-  
+
   /**
    *  将指令转成协议
    *  makeCommand("info", "all");
@@ -45,11 +45,11 @@ class RedisUtil {
   makeCommand(...args) {
     let cmds = Array();
     cmds.push(`*${args.length}\r\n`);
-    args.forEach((arg)=> {
-      if(typeof arg == 'number') {
+    args.forEach((arg) => {
+      if (typeof arg == 'number') {
         arg = String(arg);
       }
-      cmds.push(`\$${new Buffer(arg).length}\r\n${arg}\r\n`);
+      cmds.push(`\$${Buffer.from(arg).length}\r\n${arg}\r\n`);
     })
     return cmds.join("")
   }

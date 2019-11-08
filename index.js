@@ -1436,7 +1436,7 @@ class Plugin {
       .catch((err) => {
         console.log(err);
         that.redisutil.parser = that.redisutil.initParser();
-        toastr.error(LANG['error']['database'](err['status'] || JSON.stringify(err)), LANG_T['error']);
+        toastr.error(LANG['error']['database'](err['status'] || err['message'] || err['name']), LANG_T['error']);
         that.list.layout.progressOff();
       });
   }
@@ -1530,7 +1530,7 @@ class Plugin {
       .catch((err) => {
         // 重新初始化 parser
         that.redisutil.parser = that.redisutil.initParser();
-        toastr.error(LANG['error']['getkeys'](err['status'] || JSON.stringify(err)), LANG_T['error']);
+        toastr.error(LANG['error']['getkeys'](err['status'] || err['message'] || err['name']), LANG_T['error']);
         that.list.layout.progressOff();
       });
   }
@@ -1934,7 +1934,7 @@ class Plugin {
       })
       .catch((err) => {
         that.redisutil.parser = that.redisutil.initParser();
-        toastr.error(LANG['error']['getkeys'](err['status'] || JSON.stringify(err)), LANG_T['error']);
+        toastr.error(LANG['error']['getkeys'](err['status'] || err['message'] || err['name']), LANG_T['error']);
         // that.list.layout.progressOff();
       });
   }

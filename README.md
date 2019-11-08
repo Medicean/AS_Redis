@@ -1,10 +1,16 @@
 # AntSword Redis
 
-> AntSword Redis 管理插件, 需要 AntSword >= 2.0.2.1, 如果提示版本低于所需版本, 可切换分支到 `v2.0.x` 并拉取最新的开发版本代码.
+> AntSword Redis 管理插件, 需要 AntSword >= 2.0.3
 >
 > PS: 时间仓促, 代码太丑 :D
 
 通过 WebShell 对内网中的 Redis 进行管理。
+
+## Shell 类型支持
+
+- [x] PHP
+- [x] ASPX
+- [ ] ASP
 
 ## 演示截图
 

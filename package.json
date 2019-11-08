@@ -3,7 +3,7 @@
   "name_en": "Redis Manager",
   "main": "index.js",
   "icon": "database",
-  "version": "0.2",
+  "version": "0.3",
   "description": "管理 Redis",
   "description_en": "Manager Redis",
   "author": {
@@ -14,7 +14,8 @@
   "category_en": "Datamanager",
   "multiple": false,
   "scripts": [
-    "php"
+    "php",
+    "aspx"
   ],
   "dependencies": {
     "redis-commands": "^1.4.0",

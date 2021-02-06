@@ -53,7 +53,7 @@ class Plugin {
     // 2. 加载 tree
     this.parse();
     //
-    this.plugincore = new Core();
+    this.plugincore = new Core(this.core);
     this.redisutil = new RedisUtil();
 
     // 3. tree单击::设置当前配置&&激活按钮
@@ -474,9 +474,7 @@ class Plugin {
             }
             cmd += that.redisutil.makeCommand('SELECT', db);
             cmd += that.redisutil.makeCommand('RENAME', oldkey, value);
-            that.core.request({
-              _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
-            }).then((res) => {
+            that.core.request(that.plugincore.template[that.opt['type']](Buffer.from(cmd))).then((res) => {
               let ret = res['text'];
               that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
                 var retval;
@@ -542,9 +540,7 @@ class Plugin {
               }
               cmd += that.redisutil.makeCommand('SELECT', db);
               cmd += that.redisutil.makeCommand('DEL', oldkey);
-              that.core.request({
-                _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
-              }).then((res) => {
+              that.core.request(that.plugincore.template[that.opt['type']](Buffer.from(cmd))).then((res) => {
                 let ret = res['text'];
                 that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
                   var retval;
@@ -605,9 +601,7 @@ class Plugin {
             }
             cmd += that.redisutil.makeCommand('SELECT', db);
             cmd += that.redisutil.makeCommand('EXPIRE', oldkey, value);
-            that.core.request({
-              _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
-            }).then((res) => {
+            that.core.request(that.plugincore.template[that.opt['type']](Buffer.from(cmd))).then((res) => {
               let ret = res['text'];
               that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
                 var retval;
@@ -781,9 +775,7 @@ class Plugin {
               }
               cmd += that.redisutil.makeCommand('SELECT', db);
               cmd += that.redisutil.makeCommand('SET', oldkey, newvalue);
-              that.core.request({
-                _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
-              }).then((res) => {
+              that.core.request(that.plugincore.template[that.opt['type']](Buffer.from(cmd))).then((res) => {
                 let ret = res['text'];
                 that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
                   var retval;
@@ -833,9 +825,7 @@ class Plugin {
               }
               cmd += that.redisutil.makeCommand('SELECT', db);
               cmd += that.redisutil.makeCommand('LSET', oldkey, `${oldidx}`, newvalue);
-              that.core.request({
-                _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
-              }).then((res) => {
+              that.core.request(that.plugincore.template[that.opt['type']](Buffer.from(cmd))).then((res) => {
                 let ret = res['text'];
                 that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
                   var retval;
@@ -886,9 +876,7 @@ class Plugin {
               cmd += that.redisutil.makeCommand('SELECT', db);
               cmd += that.redisutil.makeCommand('SREM', oldkey, Buffer.from(b64val, 'base64').toString());
               cmd += that.redisutil.makeCommand('SADD', oldkey, newvalue);
-              that.core.request({
-                _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
-              }).then((res) => {
+              that.core.request(that.plugincore.template[that.opt['type']](Buffer.from(cmd))).then((res) => {
                 let ret = res['text'];
                 that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
                   var retval;
@@ -948,9 +936,7 @@ class Plugin {
               cmd += that.redisutil.makeCommand('SELECT', db);
               cmd += that.redisutil.makeCommand('ZREM', oldkey, Buffer.from(b64val, 'base64').toString());
               cmd += that.redisutil.makeCommand('ZADD', oldkey, Buffer.from(b64val2, 'base64').toString(), newvalue);
-              that.core.request({
-                _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
-              }).then((res) => {
+              that.core.request(that.plugincore.template[that.opt['type']](Buffer.from(cmd))).then((res) => {
                 let ret = res['text'];
                 that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
                   var retval;
@@ -1010,9 +996,7 @@ class Plugin {
               cmd += that.redisutil.makeCommand('SELECT', db);
               cmd += that.redisutil.makeCommand('HDEL', oldkey, Buffer.from(b64val, 'base64').toString());
               cmd += that.redisutil.makeCommand('HSET', oldkey, newvalue, Buffer.from(b64val2, 'base64').toString());
-              that.core.request({
-                _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
-              }).then((res) => {
+              that.core.request(that.plugincore.template[that.opt['type']](Buffer.from(cmd))).then((res) => {
                 let ret = res['text'];
                 that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
                   var retval;
@@ -1353,9 +1337,7 @@ class Plugin {
       needpass = true;
     }
     cmd += that.redisutil.makeCommand('INFO', 'Keyspace');
-    that.core.request({
-        _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
-      }).then((res) => {
+    that.core.request(that.plugincore.template[that.opt['type']](Buffer.from(cmd))).then((res) => {
         that.list.layout.progressOff();
         let ret = res['text'];
         that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
@@ -1454,9 +1436,7 @@ class Plugin {
     }
     cmd += that.redisutil.makeCommand('SELECT', `${db}`);
     cmd += that.redisutil.makeCommand('SCAN', '0', 'MATCH', '*', 'COUNT', '10000');
-    that.core.request({
-        _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
-      }).then((res) => {
+    that.core.request(that.plugincore.template[that.opt['type']](Buffer.from(cmd))).then((res) => {
         that.list.layout.progressOff();
         let ret = res['text'];
         that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
@@ -1552,9 +1532,7 @@ class Plugin {
     cmd += that.redisutil.makeCommand('SELECT', `${db}`);
     cmd += that.redisutil.makeCommand('TYPE', `${rdkey}`);
     cmd += that.redisutil.makeCommand('TTL', `${rdkey}`);
-    that.core.request({
-        _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
-      }).then((res) => {
+    that.core.request(that.plugincore.template[that.opt['type']](Buffer.from(cmd))).then((res) => {
         let ret = res['text'];
         that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
           let typevalue = "";
@@ -1622,9 +1600,7 @@ class Plugin {
               }
               cmd += that.redisutil.makeCommand('SELECT', `${db}`);
               cmd += that.redisutil.makeCommand('GET', `${rdkey}`);
-              that.core.request({
-                _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
-              }).then((res2) => {
+              that.core.request(that.plugincore.template[that.opt['type']](Buffer.from(cmd))).then((res2) => {
                 let ret2 = res2['text'];
                 that.redisutil.parseResponse(that.plugincore.decode(ret2), (valarr2, errarr2) => {
                   let strvalue = "";
@@ -1672,9 +1648,7 @@ class Plugin {
               }
               cmd += that.redisutil.makeCommand('SELECT', `${db}`);
               cmd += that.redisutil.makeCommand('LRANGE', `${rdkey}`, '0', '1000');
-              that.core.request({
-                _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
-              }).then((res2) => {
+              that.core.request(that.plugincore.template[that.opt['type']](Buffer.from(cmd))).then((res2) => {
                 let ret2 = res2['text'];
                 that.redisutil.parseResponse(that.plugincore.decode(ret2), (valarr2, errarr2) => {
                   let listvalue = "";
@@ -1734,9 +1708,7 @@ class Plugin {
               }
               cmd += that.redisutil.makeCommand('SELECT', `${db}`);
               cmd += that.redisutil.makeCommand('SSCAN', `${rdkey}`, '0', 'COUNT', '1000');
-              that.core.request({
-                _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
-              }).then((res2) => {
+              that.core.request(that.plugincore.template[that.opt['type']](Buffer.from(cmd))).then((res2) => {
 
                 let ret2 = res2['text'];
                 that.redisutil.parseResponse(that.plugincore.decode(ret2), (valarr2, errarr2) => {
@@ -1796,9 +1768,7 @@ class Plugin {
               }
               cmd += that.redisutil.makeCommand('SELECT', `${db}`);
               cmd += that.redisutil.makeCommand('HSCAN', `${rdkey}`, '0', 'COUNT', '1000');
-              that.core.request({
-                _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
-              }).then((res2) => {
+              that.core.request(that.plugincore.template[that.opt['type']](Buffer.from(cmd))).then((res2) => {
                 let ret2 = res2['text'];
                 that.redisutil.parseResponse(that.plugincore.decode(ret2), (valarr2, errarr2) => {
                   let setvalue = "";
@@ -1862,9 +1832,7 @@ class Plugin {
               }
               cmd += that.redisutil.makeCommand('SELECT', `${db}`);
               cmd += that.redisutil.makeCommand('ZRANGE', `${rdkey}`, '0', '1000', 'WITHSCORES');
-              that.core.request({
-                _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
-              }).then((res2) => {
+              that.core.request(that.plugincore.template[that.opt['type']](Buffer.from(cmd))).then((res2) => {
                 let ret2 = res2['text'];
                 that.redisutil.parseResponse(that.plugincore.decode(ret2), (valarr2, errarr2) => {
                   let setvalue = "";
@@ -2177,9 +2145,7 @@ class Plugin {
           cmd += that.redisutil.makeCommand('SELECT', `${db}`);
           cmd += addcmd;
           that.plugincore.setHost(conf['host']);
-          that.core.request({
-            _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
-          }).then((res) => {
+          that.core.request(that.plugincore.template[that.opt['type']](Buffer.from(cmd))).then((res) => {
             let ret = res['text'];
             that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
               let retval;
@@ -2455,9 +2421,7 @@ class Plugin {
           cmd += that.redisutil.makeCommand('SELECT', `${db}`);
           cmd += addcmd;
           that.plugincore.setHost(conf['host']);
-          that.core.request({
-            _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
-          }).then((res) => {
+          that.core.request(that.plugincore.template[that.opt['type']](Buffer.from(cmd))).then((res) => {
             let ret = res['text'];
             that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
               let retval;
@@ -2575,9 +2539,7 @@ class Plugin {
             cmd += that.redisutil.makeCommand('HDEL', rediskey, ivalue);
             break;
         }
-        that.core.request({
-          _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
-        }).then((res) => {
+        that.core.request(that.plugincore.template[that.opt['type']](Buffer.from(cmd))).then((res) => {
           let ret = res['text'];
           that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
             let retval;
@@ -2665,9 +2627,7 @@ class Plugin {
 
       cmd += that.redisutil.makeCommand('ZREM', rediskey, ivalue);
       cmd += that.redisutil.makeCommand('ZADD', rediskey, value, ivalue);
-      that.core.request({
-        _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
-      }).then((res) => {
+      that.core.request(that.plugincore.template[that.opt['type']](Buffer.from(cmd))).then((res) => {
         let ret = res['text'];
         that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
           var retval;
@@ -2734,9 +2694,7 @@ class Plugin {
       }
       cmd += that.redisutil.makeCommand('SELECT', db);
       cmd += that.redisutil.makeCommand('HSET', rediskey, ivalue, value);
-      that.core.request({
-        _: that.plugincore.template[that.opt['type']](Buffer.from(cmd))
-      }).then((res) => {
+      that.core.request(that.plugincore.template[that.opt['type']](Buffer.from(cmd))).then((res) => {
         let ret = res['text'];
         that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
           var retval;
@@ -2840,9 +2798,7 @@ class Plugin {
         cmds.push(tmpv);
       })
       let usercmd = basecmd + that.redisutil.makeCommand(...cmds);
-      that.core.request({
-        _: that.plugincore.template[that.opt['type']](Buffer.from(usercmd))
-      }).then((res) => {
+      that.core.request(that.plugincore.template[that.opt['type']](Buffer.from(usercmd))).then((res) => {
         let ret = res['text'];
         that.redisutil.parseResponse(that.plugincore.decode(ret), (valarr, errarr) => {
           var retval;

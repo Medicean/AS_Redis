@@ -1,7 +1,8 @@
 'use strict'
 
 class Core {
-  constructor(opt = {}) {
+  constructor(ShellCore, opt = {}) {
+    this.ShellCore = ShellCore;
     this.host = opt['host'] || "127.0.0.1:6379";
   }
 
@@ -15,6 +16,9 @@ class Core {
   }
 
   decode(str) {
+    if (str.indexOf('ERROR://') > -1) {
+      throw new Error(str);
+    }
     let b64buff = Buffer.from(str, 'base64');
     if (b64buff.toString().indexOf('ERROR://') > -1) {
       throw new Error(b64buff.toString());
@@ -23,26 +27,37 @@ class Core {
   }
 
   get template() {
+    let that = this
     return {
-      'php': (cmdbuf) => `$cmd=base64_decode("${this.encode(cmdbuf)}");
-$conn=@stream_socket_client("tcp://${this.host}", $errno, $errstr, $timeout=30);
+    'php': (cmdbuf) => {
+      return {
+        _: `$cmd=base64_decode("${that.encode(cmdbuf)}");
+$conn=@stream_socket_client("tcp://${that.host}", $errno, $errstr, $timeout=30);
 if(!$conn){
-  echo "LUVSUiBDb25uZWN0aW9uIFJlZnVzZWQ=";
+echo "LUVSUiBDb25uZWN0aW9uIFJlZnVzZWQ=";
 }else{
-  @fwrite($conn,$cmd,strlen($cmd));
-  $resp=@fread($conn, 8196);
-  @stream_set_blocking($conn,0);
-  while($buf=@fread($conn,8196)){$resp.=$buf;}
-  stream_set_blocking($conn, 1);
-  echo base64_encode($resp);
-  @stream_socket_shutdown($conn,STREAM_SHUT_RDWR);
-  @fclose($conn);
-}`,
-      'asp': (cmdbuf) => ``,
-      'aspx': (cmdbuf) => `try{
-var ipAddress = "${this.host.split(':')[0]}";
-var portNum = ${this.host.split(':')[1]};
-var sendbytes = System.Convert.FromBase64String("${this.encode(cmdbuf)}");
+@fwrite($conn,$cmd,strlen($cmd));
+$resp=@fread($conn, 8196);
+@stream_set_blocking($conn,0);
+while($buf=@fread($conn,8196)){$resp.=$buf;}
+stream_set_blocking($conn, 1);
+echo base64_encode($resp);
+@stream_socket_shutdown($conn,STREAM_SHUT_RDWR);
+@fclose($conn);
+}`
+        }
+      },
+      'asp': (cmdbuf) => {
+        return {
+          _: ``
+        }
+      },
+      'aspx': (cmdbuf) => {
+        return {
+          _: `try{
+var ipAddress = "${that.host.split(':')[0]}";
+var portNum = ${that.host.split(':')[1]};
+var sendbytes = System.Convert.FromBase64String("${that.encode(cmdbuf)}");
 var remoteEndPoint = new System.Net.IPEndPoint(System.Net.IPAddress.Parse(ipAddress), portNum);
 var client = new System.Net.Sockets.Socket(
     System.Net.Sockets.AddressFamily.InterNetwork,
@@ -64,7 +79,15 @@ Response.Write(System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(
 } catch (err) {
   Response.Write(System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("ERROR:// " + err.message)));
 }
-`,
+`
+        }
+      },
+      'jsp': (cmdbuf) => {
+        return that.ShellCore.other.redisconn({
+          addr: that.host,
+          context: cmdbuf
+        })
+      }
     }
   }
 }

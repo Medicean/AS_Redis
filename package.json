@@ -15,6 +15,8 @@
   "multiple": false,
   "scripts": [
     "php",
+    "php4",
+    "phpraw",
     "aspx",
     "jsp"
   ],

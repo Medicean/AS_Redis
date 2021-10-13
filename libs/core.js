@@ -28,7 +28,7 @@ class Core {
 
   get template() {
     let that = this
-    return {
+    let codes = {
     'php': (cmdbuf) => {
       return {
         _: `$cmd=base64_decode("${that.encode(cmdbuf)}");
@@ -89,6 +89,9 @@ Response.Write(System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(
         })
       }
     }
+    codes['phpraw'] = codes['php'];
+    codes['php4'] = codes['php'];
+    return codes;
   }
 }
 

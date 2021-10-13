@@ -1098,7 +1098,7 @@ class Plugin {
     for (let _ in conf) {
       items.push({
         id: `conn::${_}`,
-        text: `redis:\/\/${conf[_]['host']}`,
+        text: `redis:\/\/${antSword.noxss(conf[_]['host'])}`,
         im0: this.list.imgs[0],
         im1: this.list.imgs[0],
         im2: this.list.imgs[0]
@@ -1201,7 +1201,7 @@ class Plugin {
           toastr.success(LANG['add']['form']['success'], LANG_T['success']);
           this.tree.insertNewItem(0,
             `conn::${id}`,
-            `redis:\/\/${data['host']}`,
+            `redis:\/\/${antSword.noxss(data['host'])}`,
             null,
             this.list.imgs[0],
             this.list.imgs[0],
